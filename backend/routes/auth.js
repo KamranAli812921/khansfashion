@@ -79,35 +79,30 @@ router.post('/signup', async (req, res) => {
       { upsert: true, new: true }
     );
 
-    // Send email with OTP
-    try {
-      await sendEmail({
-        to: user.email,
-        subject: "Verify your Khan's Fashion account",
-        text: `Your verification code is: ${otpCode}. It will expire in 5 minutes.`,
-        html: `
-          <div style="font-family: sans-serif; padding: 20px; background-color: #0D0D0D; color: #F5F2ED;">
-            <h2 style="color: #C9A227; border-bottom: 1px solid #1A1A1A; padding-bottom: 10px;">Verification Code</h2>
-            <p>Thank you for signing up. Please enter the following OTP to verify your account:</p>
-            <div style="font-size: 24px; font-weight: bold; color: #C9A227; margin: 20px 0; background: #1A1A1A; padding: 15px; border-radius: 4px; display: inline-block; letter-spacing: 2px;">
-              ${otpCode}
-            </div>
-            <p style="color: #8A8A8A; font-size: 12px;">This OTP will expire in 5 minutes.</p>
+    // Send email with OTP in the background (non-blocking)
+    sendEmail({
+      to: user.email,
+      subject: "Verify your Khan's Fashion account",
+      text: `Your verification code is: ${otpCode}. It will expire in 5 minutes.`,
+      html: `
+        <div style="font-family: sans-serif; padding: 20px; background-color: #0D0D0D; color: #F5F2ED;">
+          <h2 style="color: #C9A227; border-bottom: 1px solid #1A1A1A; padding-bottom: 10px;">Verification Code</h2>
+          <p>Thank you for signing up. Please enter the following OTP to verify your account:</p>
+          <div style="font-size: 24px; font-weight: bold; color: #C9A227; margin: 20px 0; background: #1A1A1A; padding: 15px; border-radius: 4px; display: inline-block; letter-spacing: 2px;">
+            ${otpCode}
           </div>
-        `
-      });
-      res.status(201).json({
-        message: 'Signup successful! OTP verification email has been sent.',
-        email: user.email
-      });
-    } catch (mailErr) {
-      console.error('Failed to send verification email, registering with fallback:', mailErr);
-      res.status(201).json({
-        message: `Signup successful! (Email service timeout: Please use code ${otpCode} to verify your account)`,
-        email: user.email,
-        otpCode: otpCode
-      });
-    }
+          <p style="color: #8A8A8A; font-size: 12px;">This OTP will expire in 5 minutes.</p>
+        </div>
+      `
+    }).catch(mailErr => {
+      console.error('Failed to send verification email in background:', mailErr);
+    });
+
+    res.status(201).json({
+      message: `Signup successful! An OTP code has been sent. (Use code ${otpCode} if email is delayed)`,
+      email: user.email,
+      otpCode: otpCode
+    });
   } catch (error) {
     console.error('Signup error:', error);
     res.status(500).json({ message: 'Server error' });
@@ -190,36 +185,31 @@ router.post('/login', async (req, res) => {
         { upsert: true, new: true }
       );
 
-      try {
-        await sendEmail({
-          to: user.email,
-          subject: "Verify your Khan's Fashion account",
-          text: `Your verification code is: ${otpCode}. It will expire in 5 minutes.`,
-          html: `
-            <div style="font-family: sans-serif; padding: 20px; background-color: #0D0D0D; color: #F5F2ED;">
-              <h2 style="color: #C9A227; border-bottom: 1px solid #1A1A1A; padding-bottom: 10px;">Verification Code Required</h2>
-              <p>Your account is not yet verified. Please enter the following OTP to verify your account:</p>
-              <div style="font-size: 24px; font-weight: bold; color: #C9A227; margin: 20px 0; background: #1A1A1A; padding: 15px; border-radius: 4px; display: inline-block; letter-spacing: 2px;">
-                ${otpCode}
-              </div>
-              <p style="color: #8A8A8A; font-size: 12px;">This OTP will expire in 5 minutes.</p>
+      // Send email with OTP in the background (non-blocking)
+      sendEmail({
+        to: user.email,
+        subject: "Verify your Khan's Fashion account",
+        text: `Your verification code is: ${otpCode}. It will expire in 5 minutes.`,
+        html: `
+          <div style="font-family: sans-serif; padding: 20px; background-color: #0D0D0D; color: #F5F2ED;">
+            <h2 style="color: #C9A227; border-bottom: 1px solid #1A1A1A; padding-bottom: 10px;">Verification Code Required</h2>
+            <p>Your account is not yet verified. Please enter the following OTP to verify your account:</p>
+            <div style="font-size: 24px; font-weight: bold; color: #C9A227; margin: 20px 0; background: #1A1A1A; padding: 15px; border-radius: 4px; display: inline-block; letter-spacing: 2px;">
+              ${otpCode}
             </div>
-          `
-        });
-        return res.status(403).json({
-          message: 'Account not verified. A verification email has been sent.',
-          isVerified: false,
-          email: user.email
-        });
-      } catch (mailErr) {
-        console.error('Failed to send login verification email:', mailErr);
-        return res.status(403).json({
-          message: `Account not verified. (Email service timeout: Please use code ${otpCode} to verify your account)`,
-          isVerified: false,
-          email: user.email,
-          otpCode: otpCode
-        });
-      }
+            <p style="color: #8A8A8A; font-size: 12px;">This OTP will expire in 5 minutes.</p>
+          </div>
+        `
+      }).catch(mailErr => {
+        console.error('Failed to send login verification email in background:', mailErr);
+      });
+
+      return res.status(403).json({
+        message: `Account not verified. An OTP code has been sent. (Use code ${otpCode} if email is delayed)`,
+        isVerified: false,
+        email: user.email,
+        otpCode: otpCode
+      });
     }
 
     const isMatch = await bcrypt.compare(password, user.passwordHash);
