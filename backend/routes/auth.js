@@ -99,9 +99,8 @@ router.post('/signup', async (req, res) => {
     });
 
     res.status(201).json({
-      message: `Signup successful! An OTP code has been sent. (Use code ${otpCode} if email is delayed)`,
-      email: user.email,
-      otpCode: otpCode
+      message: 'Signup successful! An OTP verification email has been sent.',
+      email: user.email
     });
   } catch (error) {
     console.error('Signup error:', error);
@@ -205,10 +204,9 @@ router.post('/login', async (req, res) => {
       });
 
       return res.status(403).json({
-        message: `Account not verified. An OTP code has been sent. (Use code ${otpCode} if email is delayed)`,
+        message: 'Account not verified. A verification email has been sent.',
         isVerified: false,
-        email: user.email,
-        otpCode: otpCode
+        email: user.email
       });
     }
 

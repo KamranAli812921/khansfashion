@@ -362,9 +362,6 @@ class AuraApp {
       if (res.status === 201) {
         this.showAlert(data.message, 'gold');
         document.getElementById('otp-target-email').innerText = email;
-        if (data.otpCode) {
-          document.getElementById('otp-code').value = data.otpCode;
-        }
         this.toggleAuthForm('otp');
       } else {
         this.showAlert(data.message || 'Signup failed', 'rose-gold');
@@ -418,9 +415,6 @@ class AuraApp {
         // Account unverified, redirected to OTP verification
         this.showAlert(data.message, 'gold');
         document.getElementById('otp-target-email').innerText = email;
-        if (data.otpCode) {
-          document.getElementById('otp-code').value = data.otpCode;
-        }
         this.toggleAuthForm('otp');
       } else {
         this.showAlert(data.message || 'Login failed', 'rose-gold');
