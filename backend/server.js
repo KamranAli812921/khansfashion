@@ -4,6 +4,7 @@ const cors = require('cors');
 require('dotenv').config();
 
 const path = require('path');
+const { verifyEmailConfig } = require('./utils/email');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -53,6 +54,7 @@ mongoose.connect(mongoURI)
 // Start Express server
 const server = app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  verifyEmailConfig();
 });
 
 module.exports = server; // Exported for testing/verification
