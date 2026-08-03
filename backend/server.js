@@ -40,7 +40,6 @@ app.get('/health', (req, res) => {
 
 // Database connection
 const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/ecommerce';
-console.log(`Attempting to connect to MongoDB at: ${mongoURI}`);
 
 mongoose.connect(mongoURI)
   .then(() => {
