@@ -929,6 +929,9 @@ main {
   .sidebar-filters {
     display: none; /* Can trigger via mobile sheet */
   }
+  #view-admin.view-section.active {
+    overflow-y: auto !important;
+  }
   .admin-layout {
     grid-template-columns: 1fr;
     height: auto !important;
