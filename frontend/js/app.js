@@ -1910,7 +1910,8 @@ class AuraApp {
 
     const isCod = ord.paymentMethod === 'cod';
     const logoUrl = window.location.origin + '/Logo.png';
-    const trackingUrl = encodeURIComponent(window.location.origin + '/?trackOrder=' + ord._id);
+    const firstProductId = ord.items[0]?.productId || '';
+    const productUrl = encodeURIComponent(window.location.origin + '/?viewProduct=' + firstProductId);
 
     const htmlContent = `
       <!DOCTYPE html>
@@ -2129,7 +2130,7 @@ class AuraApp {
                 <strong>Date:</strong> ${formattedDate}
               </div>
               <div class="qr-container">
-                <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${trackingUrl}" alt="QR" class="qr-img">
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${productUrl}" alt="QR" class="qr-img">
               </div>
             </div>
           </div>
@@ -2203,9 +2204,9 @@ class AuraApp {
           <div class="invoice-footer" style="text-align: center;">
             <div style="margin-bottom: 5px; font-weight: bold;">Thank you for shopping with Khan's Fashion.</div>
             <div style="font-size: 9.5px; border: 1px dashed #000; padding: 4px; display: inline-block; width: 100%; box-sizing: border-box;">
-              <strong>Click or Scan to View Order Details:</strong><br>
-              <a href="${decodeURIComponent(trackingUrl)}" target="_blank" style="color: #000; text-decoration: underline; font-weight: bold; font-family: sans-serif;">
-                khansfashion.shop/?trackOrder=${ord._id}
+              <strong>Click or Scan to View Product Details:</strong><br>
+              <a href="${decodeURIComponent(productUrl)}" target="_blank" style="color: #000; text-decoration: underline; font-weight: bold; font-family: sans-serif;">
+                khansfashion.shop/?viewProduct=${firstProductId}
               </a>
             </div>
           </div>
