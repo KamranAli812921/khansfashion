@@ -546,7 +546,7 @@ main {
 
 .search-bar-container {
   display: flex;
-  margin-bottom: 1.5rem;
+  margin-bottom: 5px;
   gap: 0.5rem;
 }
 
