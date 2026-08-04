@@ -19,6 +19,19 @@ const slugify = (text) => {
 router.get('/categories', async (req, res) => {
   try {
     const categories = await Category.find().sort({ name: 1 });
+    
+    if (req.query.hasProducts === 'true') {
+      const Product = require('../models/Product');
+      const filteredCategories = [];
+      for (let cat of categories) {
+        const count = await Product.countDocuments({ category: cat.slug });
+        if (count > 0) {
+          filteredCategories.push(cat);
+        }
+      }
+      return res.status(200).json(filteredCategories);
+    }
+    
     res.status(200).json(categories);
   } catch (error) {
     console.error('Fetch categories error:', error);

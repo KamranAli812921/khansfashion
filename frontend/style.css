@@ -936,7 +936,50 @@ main {
     grid-template-columns: 1fr;
   }
   .sidebar-filters {
-    display: none; /* Can trigger via mobile sheet */
+    display: block;
+    border-right: none;
+    padding: 0.75rem 0;
+    width: 100%;
+    height: auto !important;
+  }
+  .sidebar-filters .filter-section {
+    margin-bottom: 0.75rem;
+  }
+  .sidebar-filters .filter-title {
+    font-size: 0.75rem;
+    margin-bottom: 0.5rem;
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+  .sidebar-filters .filter-list {
+    display: flex;
+    overflow-x: auto;
+    white-space: nowrap;
+    gap: 0.6rem;
+    padding-bottom: 0.5rem;
+    scrollbar-width: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .sidebar-filters .filter-item {
+    margin-bottom: 0;
+    padding: 0.4rem 0.8rem;
+    background-color: rgba(245, 242, 237, 0.03);
+    border: 1px solid rgba(245, 242, 237, 0.08);
+    border-radius: 20px;
+    font-size: 0.8rem;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    display: inline-block;
+  }
+  .sidebar-filters .filter-item:hover, 
+  .sidebar-filters .filter-item.active {
+    padding-left: 0.8rem;
+    border-left: 1px solid var(--gold);
+  }
+  .sidebar-filters .filter-item.active {
+    background-color: rgba(201, 162, 39, 0.1);
+    border: 1px solid var(--gold);
+    color: var(--gold);
   }
   #view-admin.view-section.active {
     overflow-y: auto !important;

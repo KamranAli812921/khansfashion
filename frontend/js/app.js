@@ -480,7 +480,7 @@ class AuraApp {
   // --- BROWSE / PRODUCT INVENTORY FLOW ---
   async fetchCategories() {
     try {
-      const res = await this.apiFetch('/categories');
+      const res = await this.apiFetch('/categories?hasProducts=true');
       if (res && res.status === 200) {
         this.state.categories = await res.json();
         this.renderCategoriesFilter();
@@ -2023,6 +2023,7 @@ class AuraApp {
         this.hideProductForm();
         this.loadAdminProducts();
         this.fetchProducts(); // Refresh browse view list too
+        this.fetchCategories(); // Update dynamic category filters
       } else {
         this.showAlert(data.message || 'Save failed.', 'rose-gold');
       }
@@ -2044,6 +2045,7 @@ class AuraApp {
         this.showAlert('Product deleted successfully.', 'success');
         this.loadAdminProducts();
         this.fetchProducts(); // refresh public grid
+        this.fetchCategories(); // Update dynamic category filters
       } else {
         const data = await res.json();
         this.showAlert(data.message || 'Delete failed', 'rose-gold');
