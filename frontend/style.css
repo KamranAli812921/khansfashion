@@ -494,7 +494,7 @@ main {
 .browse-container {
   display: grid;
   grid-template-columns: 240px 1fr;
-  gap: 2rem;
+  gap: 0rem;
   flex: 1;
   height: 100%;
   overflow: hidden;
