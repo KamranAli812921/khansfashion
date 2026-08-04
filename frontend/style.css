@@ -1006,6 +1006,22 @@ main {
   #view-admin.view-section.active {
     overflow-y: auto !important;
   }
+  .products-grid {
+    grid-template-columns: repeat(auto-fit, minmax(110px, 130px)) !important;
+    gap: 0.5rem !important;
+  }
+  .product-info {
+    padding: 0.4rem !important;
+  }
+  .product-name {
+    font-size: 0.8rem !important;
+  }
+  .product-price {
+    font-size: 0.85rem !important;
+  }
+  .product-category {
+    font-size: 0.6rem !important;
+  }
   .admin-layout {
     grid-template-columns: 1fr;
     height: auto !important;
