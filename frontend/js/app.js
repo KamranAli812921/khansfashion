@@ -1842,7 +1842,7 @@ class AuraApp {
       return;
     }
 
-    const printWindow = window.open('', '_blank', 'width=800,height=800');
+    const printWindow = window.open('', '_blank', 'width=1000,height=700');
     if (!printWindow) {
       this.showAlert('Popup blocked! Please allow popups to download PDF.', 'rose-gold');
       return;
@@ -1850,211 +1850,332 @@ class AuraApp {
 
     const itemsRows = ord.items.map(item => {
       const options = [];
-      if (item.size) options.push(`Size: \${item.size}`);
-      if (item.color) options.push(`Color: \${item.color}`);
-      const optionsStr = options.length > 0 ? ` (\${options.join(', ')})` : '';
-      return `
-        <tr>
-          <td style="padding: 10px; border-bottom: 1px solid #ddd; text-align: left;">
-            <strong>\${item.name}</strong>\${optionsStr}
-          </td>
-          <td style="padding: 10px; border-bottom: 1px solid #ddd; text-align: center;">\${item.qty}</td>
-          <td style="padding: 10px; border-bottom: 1px solid #ddd; text-align: right;">PKR \${item.price.toLocaleString()}</td>
-          <td style="padding: 10px; border-bottom: 1px solid #ddd; text-align: right;">PKR \${(item.price * item.qty).toLocaleString()}</td>
-        </tr>
-      `;
+      if (item.size) options.push(item.size);
+      if (item.color) options.push(item.color);
+      const optionsStr = options.length > 0 ? options.join(', ') : '-';
+      
+      return '<tr>' +
+        '<td style="padding: 4px; border-bottom: 1px solid #ddd; font-size: 10px;">' + item.name + '</td>' +
+        '<td style="padding: 4px; border-bottom: 1px solid #ddd; font-size: 10px; text-align: center;">' + optionsStr + '</td>' +
+        '<td style="padding: 4px; border-bottom: 1px solid #ddd; font-size: 10px; text-align: center;">' + item.qty + '</td>' +
+        '<td style="padding: 4px; border-bottom: 1px solid #ddd; font-size: 10px; text-align: right;">' + item.price.toLocaleString() + '</td>' +
+        '<td style="padding: 4px; border-bottom: 1px solid #ddd; font-size: 10px; text-align: right;">' + (item.price * item.qty).toLocaleString() + '</td>' +
+        '</tr>';
     }).join('');
 
     const formattedDate = new Date(ord.createdAt).toLocaleDateString('en-US', {
       year: 'numeric',
-      month: 'long',
+      month: 'short',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
     });
 
+    const isCod = ord.paymentMethod === 'cod';
+    const logoUrl = window.location.origin + '/Logo.png';
+
     const htmlContent = `
       <!DOCTYPE html>
       <html>
       <head>
-        <title>Order Receipt - \${ord._id}</title>
+        <title>Invoice - ${ord._id}</title>
         <style>
-          body {
-            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-            color: #333;
+          @page {
+            size: A4 landscape;
             margin: 0;
-            padding: 40px;
+          }
+          body {
+            font-family: 'Courier New', Courier, monospace, Arial, sans-serif;
+            color: #000;
+            margin: 0;
+            padding: 0;
+            width: 297mm;
+            height: 210mm;
+            display: flex;
+            box-sizing: border-box;
             background-color: #fff;
           }
-          .receipt-container {
-            max-width: 800px;
-            margin: 0 auto;
-            border: 1px solid #eee;
-            padding: 30px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+          .invoice-container {
+            width: 148.5mm;
+            height: 210mm;
+            padding: 10mm 8mm;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            border-right: 1px dashed #000;
+            position: relative;
+            overflow: hidden;
           }
-          .header-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 30px;
+          .invoice-header {
+            border-bottom: 1.5px solid #000;
+            padding-bottom: 5px;
           }
-          .header-logo {
-            font-size: 28px;
-            font-weight: bold;
-            color: #111;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
+          .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
           }
-          .header-title {
-            text-align: right;
-            font-size: 20px;
-            color: #C9A227;
-            font-weight: 600;
+          .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 5px;
           }
-          .details-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 35px;
+          .logo-img {
+            height: 32px;
+            width: auto;
+            object-fit: contain;
           }
-          .details-column {
-            width: 50%;
-            vertical-align: top;
-          }
-          .details-title {
-            font-size: 14px;
-            text-transform: uppercase;
+          .brand-title {
+            font-size: 18px;
+            font-weight: 900;
             letter-spacing: 0.5px;
-            color: #888;
-            margin-bottom: 8px;
-            font-weight: bold;
+            text-transform: uppercase;
+            font-family: Arial, sans-serif;
           }
-          .details-content {
-            font-size: 14px;
-            line-height: 1.5;
-            color: #444;
-          }
-          .items-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 30px;
-          }
-          .items-table th {
-            background-color: #f9f9f9;
-            padding: 12px 10px;
-            font-size: 13px;
+          .doc-title {
+            font-size: 20px;
             font-weight: bold;
             text-transform: uppercase;
-            color: #555;
-            border-bottom: 2px solid #ddd;
+            letter-spacing: 1px;
+            font-family: Arial, sans-serif;
+          }
+          .header-meta {
+            margin-top: 5px;
+            font-size: 10px;
+            line-height: 1.3;
+          }
+          .meta-row {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 5px;
+          }
+          .invoice-body {
+            display: flex;
+            gap: 15px;
+            margin-top: 8px;
+            flex-grow: 1;
+            min-height: 0;
+          }
+          .customer-details {
+            width: 46%;
+            font-size: 10px;
+            line-height: 1.4;
+          }
+          .order-summary {
+            width: 54%;
+            display: flex;
+            flex-direction: column;
+          }
+          .section-heading {
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+            border-bottom: 1px solid #000;
+            margin-bottom: 6px;
+            padding-bottom: 2px;
+            font-family: Arial, sans-serif;
+          }
+          .shipping-bold {
+            font-weight: bold;
+            font-size: 10.5px;
+          }
+          .products-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 9.5px;
+          }
+          .products-table th {
+            border-bottom: 1.5px solid #000;
+            padding: 3px;
+            font-weight: bold;
+            font-family: Arial, sans-serif;
+            text-transform: uppercase;
           }
           .totals-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 20px;
+            margin-top: 8px;
+            font-size: 11px;
           }
           .totals-table td {
-            padding: 8px 10px;
-            font-size: 14px;
+            padding: 3px;
           }
-          .grand-total {
-            font-size: 18px;
+          .grand-total-row {
             font-weight: bold;
-            color: #111;
-            border-top: 2px solid #111;
-            padding-top: 12px !important;
+            font-size: 13px;
+            border-top: 1.5px solid #000;
+            border-bottom: 1.5px solid #000;
           }
-          .footer {
-            margin-top: 50px;
+          .payment-status-block {
+            margin-top: 5px;
+            font-size: 10px;
+            text-transform: uppercase;
+          }
+          .cod-badge {
+            border: 2px solid #000;
+            padding: 5px;
             text-align: center;
+            font-weight: 900;
+            font-size: 14px;
+            font-family: Arial, sans-serif;
+            margin-top: 6px;
+            background-color: #000;
+            color: #fff;
+          }
+          .paid-badge {
+            border: 1.5px solid #000;
+            padding: 5px;
+            text-align: center;
+            font-weight: bold;
             font-size: 12px;
-            color: #888;
-            border-top: 1px solid #eee;
-            padding-top: 20px;
+            font-family: Arial, sans-serif;
+            margin-top: 6px;
+            color: #000;
+          }
+          .invoice-footer {
+            border-top: 1.5px solid #000;
+            margin-top: 8px;
+            padding-top: 5px;
+            font-size: 9px;
+            line-height: 1.3;
+          }
+          .courier-notes {
+            margin-top: 4px;
+            background-color: #f9f9f9;
+            padding: 4px;
+            border: 1px solid #ddd;
+          }
+          .courier-notes ul {
+            margin: 2px 0 0 0;
+            padding-left: 12px;
+          }
+          .qr-container {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+          }
+          .qr-img {
+            width: 50px;
+            height: 50px;
+            object-fit: contain;
           }
           @media print {
             body {
-              padding: 0;
-            }
-            .receipt-container {
-              border: none;
-              box-shadow: none;
-              padding: 0;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
             }
           }
         </style>
       </head>
       <body>
-        <div class="receipt-container">
-          <table class="header-table">
-            <tr>
-              <td class="header-logo">Khan's Fashion</td>
-              <td class="header-title">ORDER INVOICE</td>
-            </tr>
-          </table>
+        <div class="invoice-container">
+          <div class="invoice-header">
+            <div class="header-top">
+              <div class="logo-area">
+                <img src="${logoUrl}" alt="logo" class="logo-img" onerror="this.style.display='none'">
+                <span class="brand-title">Khan's Fashion</span>
+              </div>
+              <div class="doc-title">Invoice</div>
+            </div>
+            
+            <div class="header-meta">
+              <div><strong>Website:</strong> khansfashion.shop</div>
+              <div><strong>Email:</strong> khans.fashion121@gmail.com</div>
+              <div><strong>Phone:</strong> +92 3357567147</div>
+            </div>
 
-          <table class="details-table">
-            <tr>
-              <td class="details-column">
-                <div class="details-title">Order Information</div>
-                <div class="details-content">
-                  <strong>Order ID:</strong> \${ord._id}<br>
-                  <strong>Date:</strong> \${formattedDate}<br>
-                  <strong>Order Status:</strong> <span style="text-transform: capitalize;">\${ord.orderStatus}</span><br>
-                  <strong>Payment Method:</strong> \${ord.paymentMethod.replace('_', ' ').toUpperCase()}<br>
-                  <strong>Payment Status:</strong> \${ord.paymentStatus.toUpperCase()}
-                </div>
-              </td>
-              <td class="details-column" style="padding-left: 20px;">
-                <div class="details-title">Shipping & Customer</div>
-                <div class="details-content">
-                  <strong>Name:</strong> \${ord.customerId?.firstName || 'Guest'} \${ord.customerId?.lastName || ''}<br>
-                  <strong>Phone:</strong> \${ord.customerId?.phone || 'N/A'}<br>
-                  <strong>Email:</strong> \${ord.customerId?.email || 'N/A'}<br>
-                  <strong>Address:</strong> \${ord.address.street}, \${ord.address.area}<br>
-                  <strong>City/State:</strong> \${ord.address.city}
-                </div>
-              </td>
-            </tr>
-          </table>
+            <div class="meta-row">
+              <div>
+                <strong>Track ID:</strong> ${ord._id}<br>
+                <strong>Date:</strong> ${formattedDate}
+              </div>
+              <div class="qr-container">
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${ord._id}" alt="QR" class="qr-img">
+              </div>
+            </div>
+          </div>
 
-          <table class="items-table">
-            <thead>
-              <tr>
-                <th style="text-align: left; width: 50%;">Item Description</th>
-                <th style="text-align: center; width: 10%;">Qty</th>
-                <th style="text-align: right; width: 20%;">Unit Price</th>
-                <th style="text-align: right; width: 20%;">Total Price</th>
-              </tr>
-            </thead>
-            <tbody>
-              \${itemsRows}
-            </tbody>
-          </table>
+          <div class="invoice-body">
+            <!-- Left Side (Customer Details) -->
+            <div class="customer-details">
+              <div class="section-heading">Customer Details</div>
+              <div><strong>Name:</strong> ${ord.customerId?.firstName || 'Guest'} ${ord.customerId?.lastName || ''}</div>
+              <div><strong>Phone:</strong> <span style="font-size: 11px; font-weight: bold; border-bottom: 1px solid #000;">${ord.customerId?.phone || 'N/A'}</span></div>
+              <div><strong>Email:</strong> ${ord.customerId?.email || 'N/A'}</div>
+              
+              <div class="section-heading" style="margin-top: 10px;">Shipping Address</div>
+              <div class="shipping-bold">
+                Street: ${ord.address.street}<br>
+                Area: ${ord.address.area}<br>
+                City: ${ord.address.city}<br>
+                Province: ${ord.address.state || 'Punjab'}
+              </div>
+            </div>
 
-          <table class="totals-table">
-            <tr>
-              <td style="width: 60%;"></td>
-              <td style="width: 20%; text-align: right; color: #666;">Subtotal:</td>
-              <td style="width: 20%; text-align: right; font-weight: 500;">PKR \${ord.total.toLocaleString()}</td>
-            </tr>
-            <tr>
-              <td></td>
-              <td style="text-align: right; color: #666;">Delivery Charge:</td>
-              <td style="text-align: right; font-weight: 500;">PKR 0</td>
-            </tr>
-            <tr>
-              <td></td>
-              <td class="grand-total" style="text-align: right;">Total Amount:</td>
-              <td class="grand-total" style="text-align: right; color: #C9A227;">PKR \${ord.total.toLocaleString()}</td>
-            </tr>
-          </table>
+            <!-- Right Side (Order Summary) -->
+            <div class="order-summary">
+              <div class="section-heading">Products Ordered</div>
+              <div style="flex-grow: 1; overflow-y: auto; max-height: 120px;">
+                <table class="products-table">
+                  <thead>
+                    <tr>
+                      <th style="text-align: left; width: 45%;">Product</th>
+                      <th style="text-align: center; width: 15%;">Opt</th>
+                      <th style="text-align: center; width: 10%;">Qty</th>
+                      <th style="text-align: right; width: 15%;">Price</th>
+                      <th style="text-align: right; width: 15%;">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${itemsRows}
+                  </tbody>
+                </table>
+              </div>
 
-          <div class="footer">
-            <p>Thank you for shopping at Khan's Fashion!</p>
-            <p>For any queries, contact support at <strong>khans.fashion121@gmail.com</strong></p>
+              <!-- Totals -->
+              <table class="totals-table">
+                <tr>
+                  <td style="text-align: right; color: #555; font-size: 10px;">Subtotal:</td>
+                  <td style="text-align: right; font-weight: bold; width: 35%;">PKR ${ord.total.toLocaleString()}</td>
+                </tr>
+                <tr>
+                  <td style="text-align: right; color: #555; font-size: 10px;">Delivery:</td>
+                  <td style="text-align: right; font-weight: bold; text-transform: uppercase; font-size: 9.5px;">Free Delivery</td>
+                </tr>
+                <tr class="grand-total-row">
+                  <td style="text-align: right; padding-top: 4px;">Grand Total:</td>
+                  <td style="text-align: right; padding-top: 4px;">PKR ${ord.total.toLocaleString()}</td>
+                </tr>
+              </table>
+
+              <div class="payment-status-block">
+                <strong>Method:</strong> ${ord.paymentMethod.replace('_', ' ')} | 
+                <strong>Status:</strong> ${ord.paymentStatus}
+              </div>
+
+              ${
+                isCod 
+                  ? `<div class="cod-badge">COLLECT COD: PKR ${ord.total.toLocaleString()}</div>`
+                  : `<div class="paid-badge">PAID IN FULL</div>`
+              }
+            </div>
+          </div>
+
+          <div class="invoice-footer">
+            <div style="text-align: center; font-style: italic;">Thank you for shopping with Khan's Fashion.</div>
+            <div class="courier-notes">
+              <strong>Courier Notes:</strong>
+              <ul>
+                <li>Customer phone number must be clearly visible.</li>
+                <li>Delivery address should be <strong>bold</strong>.</li>
+                <li>Display COD amount prominently.</li>
+                <li>Suitable for thermal and A4 printing (Black & White).</li>
+              </ul>
+            </div>
           </div>
         </div>
-
+        
         <script>
           window.onload = function() {
             window.print();
