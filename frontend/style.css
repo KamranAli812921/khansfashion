@@ -205,7 +205,7 @@ main {
   max-width: 1200px;
   width: 100%;
   margin: 0 auto;
-  padding: 1.5rem;
+  padding: 0.5rem;
   overflow: hidden;
   display: flex;
   flex-direction: column;
