@@ -1,22 +1,21 @@
 const nodemailer = require('nodemailer');
 
 const sendEmail = async ({ to, subject, text, html }) => {
-  // 1. If Brevo HTTP API is configured, use it (never blocked by Render's firewall!)
-  if (process.env.BREVO_API_KEY) {
+  // 1. If Resend HTTP API is configured, use it (never blocked by Render's firewall!)
+  if (process.env.RESEND_API_KEY) {
     try {
-      const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+      const response = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
-          'accept': 'application/json',
-          'api-key': process.env.BREVO_API_KEY,
-          'content-type': 'application/json'
+          'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          sender: { name: "Khan's Fashion", email: process.env.EMAIL_USER || "khans.fashion121@gmail.com" },
-          to: [{ email: to }],
+          from: process.env.EMAIL_FROM || "Khan's Fashion <onboarding@resend.dev>",
+          to: [to],
           subject: subject,
-          htmlContent: html || text,
-          textContent: text
+          html: html || text,
+          text: text
         })
       });
 
@@ -26,8 +25,8 @@ const sendEmail = async ({ to, subject, text, html }) => {
       }
       return await response.json();
     } catch (err) {
-      console.error('Brevo API email dispatch failed, falling back to SMTP:', err.message);
-      // Fall through to standard SMTP if Brevo fails
+      console.error('Resend API email dispatch failed, falling back to SMTP:', err.message);
+      // Fall through to standard SMTP if Resend fails
     }
   }
 
@@ -68,8 +67,8 @@ const sendEmail = async ({ to, subject, text, html }) => {
 };
 
 const verifyEmailConfig = async () => {
-  if (process.env.BREVO_API_KEY) {
-    console.log('Email Client: Brevo API (HTTPS/443) configured and active.');
+  if (process.env.RESEND_API_KEY) {
+    console.log('Email Client: Resend API (HTTPS/443) configured and active.');
     return;
   }
 
