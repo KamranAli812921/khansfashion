@@ -127,7 +127,7 @@ a:hover .signature-underline::after {
 header {
   background-color: var(--ink-black);
   border-bottom: 1px solid var(--charcoal);
-  padding: 1.25rem 2rem;
+  padding: 0px 2rem;
   position: sticky;
   top: 0;
   z-index: 100;
@@ -880,7 +880,7 @@ main {
 
 @media (max-width: 768px) {
   header {
-    padding: 0.5rem 1rem !important;
+    padding: 0px 1rem !important;
   }
   .logo img {
     height: 42px !important;
