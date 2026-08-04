@@ -35,6 +35,24 @@ class AuraApp {
     const hash = window.location.hash.replace('#', '') || 'browse';
     this.showView(hash);
 
+    // Check if URL has ?trackOrder=OrderId (e.g. from QR scan)
+    const urlParams = new URLSearchParams(window.location.search);
+    const trackOrder = urlParams.get('trackOrder');
+    if (trackOrder) {
+      // Clear URL parameter so it doesn't stay there forever
+      window.history.replaceState({}, document.title, window.location.origin + window.location.hash);
+      
+      // Delay slightly to ensure elements are parsed, then route and search
+      setTimeout(() => {
+        const input = document.getElementById('tracking-search-id');
+        if (input) {
+          input.value = trackOrder;
+          this.showView('tracking');
+          this.searchOrder();
+        }
+      }, 300);
+    }
+
     // Initial API fetches
     this.fetchCategories();
     this.fetchProducts();
@@ -1873,6 +1891,7 @@ class AuraApp {
 
     const isCod = ord.paymentMethod === 'cod';
     const logoUrl = window.location.origin + '/Logo.png';
+    const trackingUrl = encodeURIComponent(window.location.origin + '/?trackOrder=' + ord._id);
 
     const htmlContent = `
       <!DOCTYPE html>
@@ -2091,7 +2110,7 @@ class AuraApp {
                 <strong>Date:</strong> ${formattedDate}
               </div>
               <div class="qr-container">
-                <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${ord._id}" alt="QR" class="qr-img">
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${trackingUrl}" alt="QR" class="qr-img">
               </div>
             </div>
           </div>
