@@ -1,6 +1,36 @@
 const nodemailer = require('nodemailer');
 
 const sendEmail = async ({ to, subject, text, html }) => {
+  // 1. If Brevo HTTP API is configured, use it (never blocked by Render's firewall!)
+  if (process.env.BREVO_API_KEY) {
+    try {
+      const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'api-key': process.env.BREVO_API_KEY,
+          'content-type': 'application/json'
+        },
+        body: JSON.stringify({
+          sender: { name: "Khan's Fashion", email: process.env.EMAIL_USER || "khans.fashion121@gmail.com" },
+          to: [{ email: to }],
+          subject: subject,
+          htmlContent: html || text,
+          textContent: text
+        })
+      });
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.message || `HTTP ${response.status}`);
+      }
+      return await response.json();
+    } catch (err) {
+      console.error('Brevo API email dispatch failed, falling back to SMTP:', err.message);
+      // Fall through to standard SMTP if Brevo fails
+    }
+  }
+
   const isSmtpConfigured = process.env.EMAIL_HOST && process.env.EMAIL_USER && process.env.EMAIL_PASS;
 
   if (!isSmtpConfigured) {
@@ -38,6 +68,11 @@ const sendEmail = async ({ to, subject, text, html }) => {
 };
 
 const verifyEmailConfig = async () => {
+  if (process.env.BREVO_API_KEY) {
+    console.log('Email Client: Brevo API (HTTPS/443) configured and active.');
+    return;
+  }
+
   const isSmtpConfigured = process.env.EMAIL_HOST && process.env.EMAIL_USER && process.env.EMAIL_PASS;
   if (!isSmtpConfigured) {
     console.log('SMTP is not fully configured (missing host, user, or pass). Running in MOCK mode.');
