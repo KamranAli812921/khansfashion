@@ -952,6 +952,9 @@ main {
   .sidebar-filters .filter-section:last-child {
     margin-bottom: 0;
   }
+  .sidebar-filters .filter-section:last-child .filter-list {
+    padding-bottom: 0 !important;
+  }
   .sidebar-filters .filter-title {
     font-size: 0.6rem;
     margin-bottom: 0.15rem;
