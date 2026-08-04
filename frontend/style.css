@@ -549,6 +549,33 @@ main {
   gap: 0.5rem;
 }
 
+/* Tracking Card Styles */
+.tracking-card {
+  max-width: 750px;
+  margin: 0 auto;
+  padding: 2.5rem;
+  background-color: var(--charcoal);
+  border: 1px solid rgba(245, 242, 237, 0.05);
+  border-radius: 8px;
+}
+.tracking-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(245, 242, 237, 0.1);
+  padding-bottom: 1rem;
+}
+.tracking-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 2.5rem;
+}
+.tracking-col-right {
+  border-left: 1px solid rgba(245, 242, 237, 0.05);
+  padding-left: 2.5rem;
+}
+
 /* Modal and Detail Dialogs */
 .modal-overlay {
   position: fixed;
@@ -1231,6 +1258,24 @@ main {
     width: 100% !important;
     padding: 0.4rem !important;
     font-size: 0.75rem !important;
+  }
+  
+  .tracking-card {
+    padding: 1rem !important;
+  }
+  .tracking-header {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .tracking-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1.5rem !important;
+  }
+  .tracking-col-right {
+    border-left: none !important;
+    padding-left: 0 !important;
+    border-top: 1px solid rgba(245, 242, 237, 0.05);
+    padding-top: 1.5rem;
   }
 }
 

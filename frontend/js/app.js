@@ -1485,38 +1485,38 @@ class AuraApp {
     }
 
     panel.innerHTML = `
-      <div class="form-container" style="max-width: 750px; margin: 0 auto; padding: 2.5rem;">
-        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 1.5rem; border-bottom:1px solid rgba(245,242,237,0.1); padding-bottom: 1rem;">
+      <div class="tracking-card">
+        <div class="tracking-header">
           <div>
             <span style="font-size: 0.75rem; color:var(--stone); text-transform:uppercase; letter-spacing:1px;">Order Reference ID</span>
-            <h3 style="font-family:var(--font-body); font-size: 1.1rem; font-weight:600;">${order._id}</h3>
-            <span style="font-size:0.8rem; color:var(--stone); display:block; margin-top:0.25rem;">Placed on: ${new Date(order.createdAt).toLocaleDateString()}</span>
+            <h3 style="font-family:var(--font-body); font-size: 1.1rem; font-weight:600;">\${order._id}</h3>
+            <span style="font-size:0.8rem; color:var(--stone); display:block; margin-top:0.25rem;">Placed on: \${new Date(order.createdAt).toLocaleDateString()}</span>
           </div>
           <div>
-            <span class="status-tag ${statusInfo.class}">${statusInfo.title}</span>
+            <span class="status-tag \${statusInfo.class}">\${statusInfo.title}</span>
           </div>
         </div>
 
-        <div style="display:grid; grid-template-columns: 1.2fr 1fr; gap:2.5rem;">
+        <div class="tracking-grid">
           <div>
             <h4 style="font-family:var(--font-body); font-size:0.9rem; text-transform:uppercase; color:var(--gold); margin-bottom: 1rem; border-bottom:1px solid rgba(201,162,39,0.1); padding-bottom:4px;">Items Summary</h4>
-            ${itemsHTML}
+            \${itemsHTML}
             <div style="display:flex; justify-content:space-between; font-weight:700; font-size: 1.1rem; color:var(--gold); margin-top: 1rem; padding-top: 0.5rem;">
               <span>Grand Total:</span>
-              <span>PKR ${order.total.toLocaleString()}</span>
+              <span>PKR \${order.total.toLocaleString()}</span>
             </div>
-            ${receiptHTML}
+            \${receiptHTML}
           </div>
 
-          <div style="border-left:1px solid rgba(245,242,237,0.05); padding-left:2.5rem;">
+          <div class="tracking-col-right">
             <h4 style="font-family:var(--font-body); font-size:0.9rem; text-transform:uppercase; color:var(--gold); margin-bottom: 1rem; border-bottom:1px solid rgba(201,162,39,0.1); padding-bottom:4px;">Delivery Address</h4>
-            <p style="font-size:0.9rem; color:var(--ivory);">${order.address.street}</p>
-            <p style="font-size:0.9rem; color:var(--stone);">${order.address.area}</p>
-            <p style="font-size:0.9rem; color:var(--stone);">${order.address.city}</p>
+            <p style="font-size:0.9rem; color:var(--ivory);">\${order.address.street}</p>
+            <p style="font-size:0.9rem; color:var(--stone);">\${order.address.area}</p>
+            <p style="font-size:0.9rem; color:var(--stone);">\${order.address.city}</p>
 
             <h4 style="font-family:var(--font-body); font-size:0.9rem; text-transform:uppercase; color:var(--gold); margin-top: 2rem; margin-bottom: 1rem; border-bottom:1px solid rgba(201,162,39,0.1); padding-bottom:4px;">Payment Summary</h4>
-            <p style="font-size:0.9rem;">Method: <span style="font-weight:600; text-transform:uppercase;">${order.paymentMethod.replace('_', ' ')}</span></p>
-            <p style="font-size:0.9rem; margin-top:0.25rem;">Status: <span style="font-weight:600; text-transform:uppercase; color:${order.paymentStatus === 'received' ? 'var(--success)' : 'var(--stone)'};">${order.paymentStatus}</span></p>
+            <p style="font-size:0.9rem;">Method: <span style="font-weight:600; text-transform:uppercase;">\${order.paymentMethod.replace('_', ' ')}</span></p>
+            <p style="font-size:0.9rem; margin-top:0.25rem;">Status: <span style="font-weight:600; text-transform:uppercase; color:\${order.paymentStatus === 'received' ? 'var(--success)' : 'var(--stone)'};">\${order.paymentStatus}</span></p>
           </div>
         </div>
       </div>
