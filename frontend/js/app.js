@@ -2181,16 +2181,13 @@ class AuraApp {
             </div>
           </div>
 
-          <div class="invoice-footer">
-            <div style="text-align: center; font-style: italic;">Thank you for shopping with Khan's Fashion.</div>
-            <div class="courier-notes">
-              <strong>Courier Notes:</strong>
-              <ul>
-                <li>Customer phone number must be clearly visible.</li>
-                <li>Delivery address should be <strong>bold</strong>.</li>
-                <li>Display COD amount prominently.</li>
-                <li>Suitable for thermal and A4 printing (Black & White).</li>
-              </ul>
+          <div class="invoice-footer" style="text-align: center;">
+            <div style="margin-bottom: 5px; font-weight: bold;">Thank you for shopping with Khan's Fashion.</div>
+            <div style="font-size: 9.5px; border: 1px dashed #000; padding: 4px; display: inline-block; width: 100%; box-sizing: border-box;">
+              <strong>Click or Scan to View Order Details:</strong><br>
+              <a href="${decodeURIComponent(trackingUrl)}" target="_blank" style="color: #000; text-decoration: underline; font-weight: bold; font-family: sans-serif;">
+                khansfashion.shop/?trackOrder=${ord._id}
+              </a>
             </div>
           </div>
         </div>
