@@ -39,10 +39,7 @@ class AuraApp {
     const urlParams = new URLSearchParams(window.location.search);
     const trackOrder = urlParams.get('trackOrder');
     if (trackOrder) {
-      // Clear URL parameter so it doesn't stay there forever
       window.history.replaceState({}, document.title, window.location.origin + window.location.hash);
-      
-      // Delay slightly to ensure elements are parsed, then route and search
       setTimeout(() => {
         const input = document.getElementById('tracking-search-id');
         if (input) {
@@ -50,6 +47,15 @@ class AuraApp {
           this.showView('tracking');
           this.searchOrder();
         }
+      }, 300);
+    }
+
+    // Check if URL has ?viewProduct=ProductId (e.g. from invoice link click)
+    const viewProduct = urlParams.get('viewProduct');
+    if (viewProduct) {
+      window.history.replaceState({}, document.title, window.location.origin + window.location.hash);
+      setTimeout(() => {
+        this.openProductModal(viewProduct);
       }, 300);
     }
 
@@ -812,8 +818,18 @@ class AuraApp {
   }
 
   // --- DETAILS MODAL ---
-  openProductModal(productId) {
-    const prod = this.state.products.find(p => p._id === productId);
+  async openProductModal(productId) {
+    let prod = this.state.products.find(p => p._id === productId);
+    if (!prod) {
+      try {
+        const res = await this.apiFetch(`/products/${productId}`);
+        if (res && res.status === 200) {
+          prod = await res.json();
+        }
+      } catch (err) {
+        console.error('Failed to load product details for modal:', err);
+      }
+    }
     if (!prod) return;
 
     this.state.activeProduct = prod;
@@ -1871,9 +1887,12 @@ class AuraApp {
       if (item.size) options.push(item.size);
       if (item.color) options.push(item.color);
       const optionsStr = options.length > 0 ? options.join(', ') : '-';
+      const productLink = window.location.origin + '/?viewProduct=' + item.productId;
       
       return '<tr>' +
-        '<td style="padding: 4px; border-bottom: 1px solid #ddd; font-size: 10px;">' + item.name + '</td>' +
+        '<td style="padding: 4px; border-bottom: 1px solid #ddd; font-size: 10px;">' +
+          '<a href="' + productLink + '" target="_blank" style="color: #000; text-decoration: underline; font-weight: bold;">' + item.name + '</a>' +
+        '</td>' +
         '<td style="padding: 4px; border-bottom: 1px solid #ddd; font-size: 10px; text-align: center;">' + optionsStr + '</td>' +
         '<td style="padding: 4px; border-bottom: 1px solid #ddd; font-size: 10px; text-align: center;">' + item.qty + '</td>' +
         '<td style="padding: 4px; border-bottom: 1px solid #ddd; font-size: 10px; text-align: right;">' + item.price.toLocaleString() + '</td>' +
