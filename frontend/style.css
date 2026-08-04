@@ -1006,6 +1006,12 @@ main {
   #view-admin.view-section.active {
     overflow-y: auto !important;
   }
+  .section-title {
+    font-size: 1.5rem !important;
+    margin-top: 0.2rem !important;
+    margin-bottom: 0.5rem !important;
+    padding-bottom: 5px !important;
+  }
   .products-grid {
     grid-template-columns: repeat(auto-fit, minmax(110px, 130px)) !important;
     gap: 0.5rem !important;
