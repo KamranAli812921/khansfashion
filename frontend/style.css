@@ -94,7 +94,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .section-title {
   font-size: 2rem;
-  margin-top: 0.5rem;
+  margin-top: 0.1rem;
   margin-bottom: 0.75rem;
   text-align: center;
   position: relative;
@@ -1008,7 +1008,7 @@ main {
   }
   .section-title {
     font-size: 1.5rem !important;
-    margin-top: 0.2rem !important;
+    margin-top: 0px !important;
     margin-bottom: 0.5rem !important;
     padding-bottom: 5px !important;
   }
