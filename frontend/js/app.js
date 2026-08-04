@@ -20,7 +20,8 @@ class AuraApp {
       currentAdminTab: 'overview',
       activeProduct: null, // For details modal
       adminImages: [],
-      adminVideos: []
+      adminVideos: [],
+      adminOrders: []
     };
   }
 
@@ -1732,6 +1733,7 @@ class AuraApp {
       const res = await this.apiFetch(`/admin/orders?status=${filterStatus}`);
       if (res.status === 200) {
         const orders = await res.json();
+        this.state.adminOrders = orders;
         const list = document.getElementById('admin-full-orders-list');
         
         if (orders.length === 0) {
@@ -1790,6 +1792,7 @@ class AuraApp {
                     <option value="delivered" ${ord.orderStatus === 'delivered' ? 'selected' : ''}>Delivered</option>
                     <option value="cancelled" ${ord.orderStatus === 'cancelled' ? 'selected' : ''}>Cancelled</option>
                   </select>
+                  <button class="btn btn-primary" style="padding:0.2rem; font-size:0.65rem;" onclick="app.downloadOrderPDF('${ord._id}')">Download PDF</button>
                 </div>
               </td>
             </tr>
@@ -1830,6 +1833,242 @@ class AuraApp {
     } catch (err) {
       this.showAlert('Failed to update payment status.', 'rose-gold');
     }
+  }
+
+  downloadOrderPDF(orderId) {
+    const ord = this.state.adminOrders.find(o => o._id === orderId);
+    if (!ord) {
+      this.showAlert('Order details not found.', 'rose-gold');
+      return;
+    }
+
+    const printWindow = window.open('', '_blank', 'width=800,height=800');
+    if (!printWindow) {
+      this.showAlert('Popup blocked! Please allow popups to download PDF.', 'rose-gold');
+      return;
+    }
+
+    const itemsRows = ord.items.map(item => {
+      const options = [];
+      if (item.size) options.push(`Size: \${item.size}`);
+      if (item.color) options.push(`Color: \${item.color}`);
+      const optionsStr = options.length > 0 ? ` (\${options.join(', ')})` : '';
+      return `
+        <tr>
+          <td style="padding: 10px; border-bottom: 1px solid #ddd; text-align: left;">
+            <strong>\${item.name}</strong>\${optionsStr}
+          </td>
+          <td style="padding: 10px; border-bottom: 1px solid #ddd; text-align: center;">\${item.qty}</td>
+          <td style="padding: 10px; border-bottom: 1px solid #ddd; text-align: right;">PKR \${item.price.toLocaleString()}</td>
+          <td style="padding: 10px; border-bottom: 1px solid #ddd; text-align: right;">PKR \${(item.price * item.qty).toLocaleString()}</td>
+        </tr>
+      `;
+    }).join('');
+
+    const formattedDate = new Date(ord.createdAt).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Order Receipt - \${ord._id}</title>
+        <style>
+          body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            color: #333;
+            margin: 0;
+            padding: 40px;
+            background-color: #fff;
+          }
+          .receipt-container {
+            max-width: 800px;
+            margin: 0 auto;
+            border: 1px solid #eee;
+            padding: 30px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+          }
+          .header-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+          }
+          .header-logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: #111;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+          }
+          .header-title {
+            text-align: right;
+            font-size: 20px;
+            color: #C9A227;
+            font-weight: 600;
+          }
+          .details-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 35px;
+          }
+          .details-column {
+            width: 50%;
+            vertical-align: top;
+          }
+          .details-title {
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #888;
+            margin-bottom: 8px;
+            font-weight: bold;
+          }
+          .details-content {
+            font-size: 14px;
+            line-height: 1.5;
+            color: #444;
+          }
+          .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+          }
+          .items-table th {
+            background-color: #f9f9f9;
+            padding: 12px 10px;
+            font-size: 13px;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: #555;
+            border-bottom: 2px solid #ddd;
+          }
+          .totals-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+          }
+          .totals-table td {
+            padding: 8px 10px;
+            font-size: 14px;
+          }
+          .grand-total {
+            font-size: 18px;
+            font-weight: bold;
+            color: #111;
+            border-top: 2px solid #111;
+            padding-top: 12px !important;
+          }
+          .footer {
+            margin-top: 50px;
+            text-align: center;
+            font-size: 12px;
+            color: #888;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+          }
+          @media print {
+            body {
+              padding: 0;
+            }
+            .receipt-container {
+              border: none;
+              box-shadow: none;
+              padding: 0;
+            }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="receipt-container">
+          <table class="header-table">
+            <tr>
+              <td class="header-logo">Khan's Fashion</td>
+              <td class="header-title">ORDER INVOICE</td>
+            </tr>
+          </table>
+
+          <table class="details-table">
+            <tr>
+              <td class="details-column">
+                <div class="details-title">Order Information</div>
+                <div class="details-content">
+                  <strong>Order ID:</strong> \${ord._id}<br>
+                  <strong>Date:</strong> \${formattedDate}<br>
+                  <strong>Order Status:</strong> <span style="text-transform: capitalize;">\${ord.orderStatus}</span><br>
+                  <strong>Payment Method:</strong> \${ord.paymentMethod.replace('_', ' ').toUpperCase()}<br>
+                  <strong>Payment Status:</strong> \${ord.paymentStatus.toUpperCase()}
+                </div>
+              </td>
+              <td class="details-column" style="padding-left: 20px;">
+                <div class="details-title">Shipping & Customer</div>
+                <div class="details-content">
+                  <strong>Name:</strong> \${ord.customerId?.firstName || 'Guest'} \${ord.customerId?.lastName || ''}<br>
+                  <strong>Phone:</strong> \${ord.customerId?.phone || 'N/A'}<br>
+                  <strong>Email:</strong> \${ord.customerId?.email || 'N/A'}<br>
+                  <strong>Address:</strong> \${ord.address.street}, \${ord.address.area}<br>
+                  <strong>City/State:</strong> \${ord.address.city}
+                </div>
+              </td>
+            </tr>
+          </table>
+
+          <table class="items-table">
+            <thead>
+              <tr>
+                <th style="text-align: left; width: 50%;">Item Description</th>
+                <th style="text-align: center; width: 10%;">Qty</th>
+                <th style="text-align: right; width: 20%;">Unit Price</th>
+                <th style="text-align: right; width: 20%;">Total Price</th>
+              </tr>
+            </thead>
+            <tbody>
+              \${itemsRows}
+            </tbody>
+          </table>
+
+          <table class="totals-table">
+            <tr>
+              <td style="width: 60%;"></td>
+              <td style="width: 20%; text-align: right; color: #666;">Subtotal:</td>
+              <td style="width: 20%; text-align: right; font-weight: 500;">PKR \${ord.total.toLocaleString()}</td>
+            </tr>
+            <tr>
+              <td></td>
+              <td style="text-align: right; color: #666;">Delivery Charge:</td>
+              <td style="text-align: right; font-weight: 500;">PKR 0</td>
+            </tr>
+            <tr>
+              <td></td>
+              <td class="grand-total" style="text-align: right;">Total Amount:</td>
+              <td class="grand-total" style="text-align: right; color: #C9A227;">PKR \${ord.total.toLocaleString()}</td>
+            </tr>
+          </table>
+
+          <div class="footer">
+            <p>Thank you for shopping at Khan's Fashion!</p>
+            <p>For any queries, contact support at <strong>khans.fashion121@gmail.com</strong></p>
+          </div>
+        </div>
+
+        <script>
+          window.onload = function() {
+            window.print();
+            setTimeout(function() {
+              window.close();
+            }, 1000);
+          };
+        </script>
+      </body>
+      </html>
+    `;
+
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
   }
 
   renderAdminMediaPreviews() {
