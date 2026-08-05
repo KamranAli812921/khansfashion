@@ -10,7 +10,12 @@ const ProductSchema = new mongoose.Schema({
   videos: [{ type: String }],
   isOnSale: { type: Boolean, default: false },
   sizes: [{ type: String }],
-  colors: [{ type: String }]
+  colors: [{ type: String }],
+  sizePrices: [{
+    size: { type: String, required: true },
+    price: { type: Number, required: true },
+    discountPrice: { type: Number }
+  }]
 }, {
   timestamps: true
 });

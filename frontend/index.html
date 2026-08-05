@@ -422,6 +422,27 @@
                   <label class="form-label">Product Description</label>
                   <textarea id="admin-product-description" class="form-input" rows="4" required></textarea>
                 </div>
+                <div class="form-group" style="margin-top: 1rem; margin-bottom: 1.5rem;">
+                  <label class="form-label" style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>Size-Specific Pricing (Optional)</span>
+                    <button type="button" class="btn btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" onclick="app.addAdminSizePriceRow()">+ Add Row</button>
+                  </label>
+                  <div style="overflow-x: auto; background: #121212; border: 1px solid rgba(245,242,237,0.05); padding: 0.5rem; border-radius: 4px;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;" id="admin-product-size-prices-table">
+                      <thead>
+                        <tr style="border-bottom: 1px solid rgba(245,242,237,0.1); text-align: left;">
+                          <th style="padding: 0.25rem; color: var(--gold);">Size</th>
+                          <th style="padding: 0.25rem; color: var(--gold);">Regular Price (PKR)</th>
+                          <th style="padding: 0.25rem; color: var(--gold);">Discount Price (PKR)</th>
+                          <th style="padding: 0.25rem; text-align: center; width: 80px; color: var(--gold);">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody id="admin-product-size-prices-body">
+                        <!-- Dynamic rows -->
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
                 <div class="form-row">
                   <div class="form-group">
                     <label class="form-label">Select Images</label>

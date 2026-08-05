@@ -678,6 +678,63 @@ class AuraApp {
     this.state.selectedColor = color;
   }
 
+  handleModalSizePriceChange(selectEl) {
+    const selectedOption = selectEl.options[selectEl.selectedIndex];
+    const size = selectedOption.value;
+    
+    this.state.selectedSize = size || null;
+    
+    const priceTextContainer = document.querySelector('.product-price-container');
+    if (!priceTextContainer) return;
+    
+    if (!size) {
+      const prod = this.state.activeProduct;
+      const displayPrice = prod.isOnSale && prod.discountPrice ? prod.discountPrice : prod.price;
+      const originalPriceText = prod.isOnSale && prod.discountPrice ? `<span class="original-price">PKR ${prod.price.toLocaleString()}</span>` : '';
+      priceTextContainer.innerHTML = `
+        <span class="product-price" style="font-weight: 700;">PKR ${displayPrice.toLocaleString()}</span>
+        ${originalPriceText}
+      `;
+      return;
+    }
+    
+    const price = parseFloat(selectedOption.dataset.price);
+    const discountPriceVal = selectedOption.dataset.discount;
+    const discountPrice = discountPriceVal ? parseFloat(discountPriceVal) : null;
+    
+    const displayPrice = discountPrice || price;
+    const originalPriceText = discountPrice ? `<span class="original-price">PKR ${price.toLocaleString()}</span>` : '';
+    
+    priceTextContainer.innerHTML = `
+      <span class="product-price" style="font-weight: 700;">PKR ${displayPrice.toLocaleString()}</span>
+      ${originalPriceText}
+    `;
+  }
+
+  handleQuickSizePriceChange(selectEl) {
+    const selectedOption = selectEl.options[selectEl.selectedIndex];
+    const size = selectedOption.value;
+    
+    this.state.selectedSize = size || null;
+    
+    const priceEl = document.getElementById('quick-action-price-display');
+    if (!priceEl) return;
+    
+    if (!size) {
+      const prod = this.state.activeProduct;
+      const displayPrice = prod.isOnSale && prod.discountPrice ? prod.discountPrice : prod.price;
+      priceEl.innerText = `PKR ${displayPrice.toLocaleString()}`;
+      return;
+    }
+    
+    const price = parseFloat(selectedOption.dataset.price);
+    const discountPriceVal = selectedOption.dataset.discount;
+    const discountPrice = discountPriceVal ? parseFloat(discountPriceVal) : null;
+    
+    const displayPrice = discountPrice || price;
+    priceEl.innerText = `PKR ${displayPrice.toLocaleString()}`;
+  }
+
   // --- QUICK ACTION DIALOG ---
   openQuickActionModal(productId) {
     const prod = this.state.products.find(p => p._id === productId);
@@ -699,7 +756,24 @@ class AuraApp {
     const displayPrice = prod.isOnSale && prod.discountPrice ? prod.discountPrice : prod.price;
 
     let sizesHTML = '';
-    if (prod.sizes && prod.sizes.length > 0) {
+    if (prod.sizePrices && prod.sizePrices.length > 0) {
+      sizesHTML = `
+        <div style="margin-bottom: 1rem; text-align: left;">
+          <span style="font-weight:600; font-size:0.8rem; color:var(--gold); display:block; margin-bottom:0.35rem; text-transform:uppercase; letter-spacing:0.5px;">Select Size</span>
+          <select id="quick-product-size-select" class="form-input" style="padding: 0.5rem;" onchange="app.handleQuickSizePriceChange(this)">
+            <option value="">-- Choose Size --</option>
+            ${prod.sizePrices.map(sp => {
+              const displayP = sp.discountPrice || sp.price;
+              const hasDiscount = !!sp.discountPrice;
+              const priceText = hasDiscount 
+                ? `PKR ${sp.discountPrice.toLocaleString()} (Was PKR ${sp.price.toLocaleString()})`
+                : `PKR ${sp.price.toLocaleString()}`;
+              return `<option value="${sp.size}" data-price="${sp.price}" data-discount="${sp.discountPrice || ''}">${sp.size} - ${priceText}</option>`;
+            }).join('')}
+          </select>
+        </div>
+      `;
+    } else if (prod.sizes && prod.sizes.length > 0) {
       sizesHTML = `
         <div style="margin-bottom: 1rem; text-align: left;">
           <span style="font-weight:600; font-size:0.8rem; color:var(--gold); display:block; margin-bottom:0.35rem; text-transform:uppercase; letter-spacing:0.5px;">Select Size</span>
@@ -730,7 +804,7 @@ class AuraApp {
       <div style="margin-bottom: 1.5rem; text-align: center;">
         <img src="${prod.images[0] || 'https://images.unsplash.com/photo-1549298916-b41d501d3772?q=80&w=600'}" alt="${prod.name}" style="width: 120px; height: 120px; object-fit: cover; margin: 0 auto 1rem; display: block; border-radius: 0; border: 1px solid rgba(245,242,237,0.1);">
         <h3 style="font-family: var(--font-display); font-size: 1.6rem; color: var(--ivory); margin-bottom: 0.5rem; text-align: center;">${prod.name}</h3>
-        <p style="color: var(--gold); font-weight: 600; font-size: 1.1rem; text-align: center; font-family: var(--font-body);">PKR ${displayPrice.toLocaleString()}</p>
+        <p id="quick-action-price-display" style="color: var(--gold); font-weight: 600; font-size: 1.1rem; text-align: center; font-family: var(--font-body);">PKR ${displayPrice.toLocaleString()}</p>
       </div>
       
       <p style="font-size: 0.9rem; color: var(--stone); margin-bottom: 1.5rem; text-align: center;">Choose size, color & action to proceed:</p>
@@ -763,7 +837,8 @@ class AuraApp {
     const prod = this.state.products.find(p => p._id === productId);
     if (!prod) return;
 
-    if (prod.sizes && prod.sizes.length > 0 && !this.state.selectedSize) {
+    const hasSizes = (prod.sizes && prod.sizes.length > 0) || (prod.sizePrices && prod.sizePrices.length > 0);
+    if (hasSizes && !this.state.selectedSize) {
       this.showAlert('Please select a size.', 'rose-gold');
       return;
     }
@@ -781,7 +856,13 @@ class AuraApp {
     if (existingItem) {
       existingItem.qty++;
     } else {
-      const price = prod.isOnSale && prod.discountPrice ? prod.discountPrice : prod.price;
+      let price = prod.isOnSale && prod.discountPrice ? prod.discountPrice : prod.price;
+      if (prod.sizePrices && prod.sizePrices.length > 0 && size) {
+        const matchingSizePrice = prod.sizePrices.find(sp => sp.size === size);
+        if (matchingSizePrice) {
+          price = matchingSizePrice.discountPrice || matchingSizePrice.price;
+        }
+      }
       this.state.cart.push({
         productId: prod._id,
         name: prod.name,
@@ -899,7 +980,24 @@ class AuraApp {
     `;
 
     let sizesHTML = '';
-    if (prod.sizes && prod.sizes.length > 0) {
+    if (prod.sizePrices && prod.sizePrices.length > 0) {
+      sizesHTML = `
+        <div style="margin-bottom: 1.25rem;">
+          <span style="font-weight:600; font-size:0.85rem; color:var(--gold); display:block; margin-bottom:0.35rem; text-transform:uppercase; letter-spacing:0.5px;">Select Size</span>
+          <select id="modal-product-size-select" class="form-input" style="padding: 0.5rem;" onchange="app.handleModalSizePriceChange(this)">
+            <option value="">-- Choose Size --</option>
+            ${prod.sizePrices.map(sp => {
+              const displayP = sp.discountPrice || sp.price;
+              const hasDiscount = !!sp.discountPrice;
+              const priceText = hasDiscount 
+                ? `PKR ${sp.discountPrice.toLocaleString()} (Was PKR ${sp.price.toLocaleString()})`
+                : `PKR ${sp.price.toLocaleString()}`;
+              return `<option value="${sp.size}" data-price="${sp.price}" data-discount="${sp.discountPrice || ''}">${sp.size} - ${priceText}</option>`;
+            }).join('')}
+          </select>
+        </div>
+      `;
+    } else if (prod.sizes && prod.sizes.length > 0) {
       sizesHTML = `
         <div style="margin-bottom: 1.25rem;">
           <span style="font-weight:600; font-size:0.85rem; color:var(--gold); display:block; margin-bottom:0.35rem; text-transform:uppercase; letter-spacing:0.5px;">Select Size</span>
@@ -1058,7 +1156,8 @@ class AuraApp {
     const prod = this.state.products.find(p => p._id === productId) || this.state.activeProduct;
     if (!prod) return;
 
-    if (prod.sizes && prod.sizes.length > 0 && !this.state.selectedSize) {
+    const hasSizes = (prod.sizes && prod.sizes.length > 0) || (prod.sizePrices && prod.sizePrices.length > 0);
+    if (hasSizes && !this.state.selectedSize) {
       this.showAlert('Please select a size.', 'rose-gold');
       return;
     }
@@ -1075,7 +1174,13 @@ class AuraApp {
     if (existingItem) {
       existingItem.qty++;
     } else {
-      const price = prod.isOnSale && prod.discountPrice ? prod.discountPrice : prod.price;
+      let price = prod.isOnSale && prod.discountPrice ? prod.discountPrice : prod.price;
+      if (prod.sizePrices && prod.sizePrices.length > 0 && size) {
+        const matchingSizePrice = prod.sizePrices.find(sp => sp.size === size);
+        if (matchingSizePrice) {
+          price = matchingSizePrice.discountPrice || matchingSizePrice.price;
+        }
+      }
       this.state.cart.push({
         productId: prod._id,
         name: prod.name,
@@ -2310,9 +2415,34 @@ class AuraApp {
     document.getElementById('admin-product-form-container').style.display = 'block';
     document.getElementById('admin-product-form-title').innerText = 'Add New Product';
     
+    // Clear size prices table
+    document.getElementById('admin-product-size-prices-body').innerHTML = '';
+    
     // Load categories option dropdown
     const select = document.getElementById('admin-product-category');
     select.innerHTML = this.state.allCategories.map(c => `<option value="${c.slug}">${c.name}</option>`).join('');
+  }
+
+  addAdminSizePriceRow(size = '', price = '', discountPrice = '') {
+    const tbody = document.getElementById('admin-product-size-prices-body');
+    if (!tbody) return;
+    const tr = document.createElement('tr');
+    tr.className = 'admin-size-price-row';
+    tr.innerHTML = `
+      <td style="padding: 0.25rem;">
+        <input type="text" class="form-input size-input" style="padding: 0.3rem; margin:0;" value="${size}" placeholder="e.g. S, M, L" required>
+      </td>
+      <td style="padding: 0.25rem;">
+        <input type="number" class="form-input price-input" style="padding: 0.3rem; margin:0;" value="${price}" placeholder="e.g. 1500" required>
+      </td>
+      <td style="padding: 0.25rem;">
+        <input type="number" class="form-input discount-input" style="padding: 0.3rem; margin:0;" value="${discountPrice}" placeholder="e.g. 1200">
+      </td>
+      <td style="padding: 0.25rem; text-align: center;">
+        <button type="button" class="btn btn-rose" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; margin:0;" onclick="this.closest('tr').remove()">Remove</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
   }
 
   async showEditProductForm(productId) {
@@ -2333,6 +2463,14 @@ class AuraApp {
         document.getElementById('admin-product-colors').value = prod.colors ? prod.colors.join(', ') : '';
         document.getElementById('admin-product-description').value = prod.description;
         
+        // Clear and load size prices
+        document.getElementById('admin-product-size-prices-body').innerHTML = '';
+        if (prod.sizePrices && prod.sizePrices.length > 0) {
+          prod.sizePrices.forEach(sp => {
+            this.addAdminSizePriceRow(sp.size, sp.price, sp.discountPrice || '');
+          });
+        }
+
         // Load media files into state and render previews
         this.state.adminImages = prod.images || [];
         this.state.adminVideos = prod.videos || [];
@@ -2363,6 +2501,7 @@ class AuraApp {
     this.state.adminImages = [];
     this.state.adminVideos = [];
     this.renderAdminMediaPreviews();
+    document.getElementById('admin-product-size-prices-body').innerHTML = '';
     
     // Reset file input values
     const imageFilesInput = document.getElementById('admin-product-image-files');
@@ -2387,6 +2526,19 @@ class AuraApp {
     const sizes = sizesInput.split(',').map(s => s.trim()).filter(Boolean);
     const colors = colorsInput.split(',').map(c => c.trim()).filter(Boolean);
 
+    // Collect size-specific prices
+    const sizePricesRows = document.querySelectorAll('.admin-size-price-row');
+    const sizePrices = [];
+    sizePricesRows.forEach(row => {
+      const sizeVal = row.querySelector('.size-input').value.trim();
+      const priceVal = parseFloat(row.querySelector('.price-input').value);
+      const discountVal = row.querySelector('.discount-input').value.trim();
+      const discPrice = discountVal ? parseFloat(discountVal) : undefined;
+      if (sizeVal && !isNaN(priceVal)) {
+        sizePrices.push({ size: sizeVal, price: priceVal, discountPrice: discPrice });
+      }
+    });
+
     const payload = {
       name, 
       category, 
@@ -2397,7 +2549,8 @@ class AuraApp {
       colors,
       description, 
       images: this.state.adminImages, 
-      videos: this.state.adminVideos
+      videos: this.state.adminVideos,
+      sizePrices
     };
 
     const endpoint = id ? `/admin/products/${id}` : '/admin/products';

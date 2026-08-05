@@ -72,7 +72,7 @@ router.get('/products/:id', async (req, res) => {
 // @desc    Create a new product (Admin only)
 router.post('/admin/products', authenticateToken, requireAdmin, async (req, res) => {
   try {
-    const { name, description, price, discountPrice, category, images, videos, isOnSale, sizes, colors } = req.body;
+    const { name, description, price, discountPrice, category, images, videos, isOnSale, sizes, colors, sizePrices } = req.body;
 
     if (!name || !description || !price || !category) {
       return res.status(400).json({ message: 'Please enter all required fields' });
@@ -91,7 +91,8 @@ router.post('/admin/products', authenticateToken, requireAdmin, async (req, res)
       videos: processedVideos,
       isOnSale: isOnSale || false,
       sizes: sizes || [],
-      colors: colors || []
+      colors: colors || [],
+      sizePrices: sizePrices || []
     });
 
     await product.save();
