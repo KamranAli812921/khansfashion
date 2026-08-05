@@ -8,6 +8,7 @@ class AuraApp {
       refreshToken: localStorage.getItem('aura_refresh_token') || null,
       cart: JSON.parse(localStorage.getItem('aura_cart')) || [],
       categories: [],
+      allCategories: [],
       products: [],
       currentPage: 1,
       itemsPerPage: 20,
@@ -505,10 +506,17 @@ class AuraApp {
   // --- BROWSE / PRODUCT INVENTORY FLOW ---
   async fetchCategories() {
     try {
+      // 1. Fetch storefront categories (only those with products)
       const res = await this.apiFetch('/categories?hasProducts=true');
       if (res && res.status === 200) {
         this.state.categories = await res.json();
         this.renderCategoriesFilter();
+      }
+
+      // 2. Fetch all categories (for admin product forms & listings)
+      const resAll = await this.apiFetch('/categories');
+      if (resAll && resAll.status === 200) {
+        this.state.allCategories = await resAll.json();
       }
     } catch (err) {
       console.error('Error fetching categories:', err);
@@ -2304,7 +2312,7 @@ class AuraApp {
     
     // Load categories option dropdown
     const select = document.getElementById('admin-product-category');
-    select.innerHTML = this.state.categories.map(c => `<option value="${c.slug}">${c.name}</option>`).join('');
+    select.innerHTML = this.state.allCategories.map(c => `<option value="${c.slug}">${c.name}</option>`).join('');
   }
 
   async showEditProductForm(productId) {
@@ -2331,7 +2339,7 @@ class AuraApp {
         this.renderAdminMediaPreviews();
 
         const select = document.getElementById('admin-product-category');
-        select.innerHTML = this.state.categories.map(c => `
+        select.innerHTML = this.state.allCategories.map(c => `
           <option value="${c.slug}" ${prod.category === c.slug ? 'selected' : ''}>${c.name}</option>
         `).join('');
       }
@@ -2456,9 +2464,9 @@ class AuraApp {
     try {
       const res = await fetch(`${API_URL}/categories`);
       if (res.status === 200) {
-        this.state.categories = await res.json();
+        this.state.allCategories = await res.json();
         const list = document.getElementById('admin-categories-list');
-        list.innerHTML = this.state.categories.map(c => `
+        list.innerHTML = this.state.allCategories.map(c => `
           <tr>
             <td data-label="Category Name"><strong>${c.name}</strong></td>
             <td data-label="Slug"><code style="background:#121212; padding:0.25rem 0.5rem;">${c.slug}</code></td>
