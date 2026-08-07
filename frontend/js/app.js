@@ -2420,7 +2420,7 @@ class AuraApp {
     
     // Load categories option dropdown
     const select = document.getElementById('admin-product-category');
-    select.innerHTML = this.state.allCategories.map(c => `<option value="${c.slug}">${c.name}</option>`).join('');
+    select.innerHTML = '<option value="">-- No Category (Uncategorized) --</option>' + this.state.allCategories.map(c => `<option value="${c.slug}">${c.name}</option>`).join('');
   }
 
   addAdminSizePriceRow(size = '', price = '', discountPrice = '') {
@@ -2477,9 +2477,10 @@ class AuraApp {
         this.renderAdminMediaPreviews();
 
         const select = document.getElementById('admin-product-category');
-        select.innerHTML = this.state.allCategories.map(c => `
-          <option value="${c.slug}" ${prod.category === c.slug ? 'selected' : ''}>${c.name}</option>
-        `).join('');
+        select.innerHTML = `<option value="" ${!prod.category || prod.category === 'uncategorized' ? 'selected' : ''}>-- No Category (Uncategorized) --</option>` + 
+          this.state.allCategories.map(c => `
+            <option value="${c.slug}" ${prod.category === c.slug ? 'selected' : ''}>${c.name}</option>
+          `).join('');
       }
     } catch (err) {
       this.showAlert('Could not load product details.', 'rose-gold');

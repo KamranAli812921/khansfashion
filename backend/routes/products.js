@@ -74,7 +74,7 @@ router.post('/admin/products', authenticateToken, requireAdmin, async (req, res)
   try {
     const { name, description, price, discountPrice, category, images, videos, isOnSale, sizes, colors, sizePrices } = req.body;
 
-    if (!name || !description || !price || !category) {
+    if (!name || !description || !price) {
       return res.status(400).json({ message: 'Please enter all required fields' });
     }
 
@@ -86,7 +86,7 @@ router.post('/admin/products', authenticateToken, requireAdmin, async (req, res)
       description,
       price,
       discountPrice,
-      category,
+      category: category || 'uncategorized',
       images: processedImages,
       videos: processedVideos,
       isOnSale: isOnSale || false,
