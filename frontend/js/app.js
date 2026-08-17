@@ -18,6 +18,7 @@ class AuraApp {
         search: '',
         isOnSale: false
       },
+      categoriesExpanded: false,
       currentAdminTab: 'overview',
       activeProduct: null, // For details modal
       adminImages: [],
@@ -545,10 +546,25 @@ class AuraApp {
     // Keep first item
     list.innerHTML = `<li class="filter-item ${this.state.currentFilters.category === 'all' ? 'active' : ''}" data-category="all" onclick="app.filterCategory('all')">All Products</li>`;
 
-    this.state.categories.forEach(cat => {
+    const VISIBLE_LIMIT = 4;
+    const hasMore = this.state.categories.length > VISIBLE_LIMIT;
+    const categoriesToShow = (this.state.categoriesExpanded || !hasMore)
+      ? this.state.categories
+      : this.state.categories.slice(0, VISIBLE_LIMIT);
+
+    categoriesToShow.forEach(cat => {
       const activeClass = this.state.currentFilters.category === cat.slug ? 'active' : '';
       list.innerHTML += `<li class="filter-item ${activeClass}" data-category="${cat.slug}" onclick="app.filterCategory('${cat.slug}')">${cat.name}</li>`;
     });
+
+    if (hasMore) {
+      list.innerHTML += `<li class="filter-item filter-toggle" onclick="app.toggleCategoriesExpanded()">${this.state.categoriesExpanded ? 'See Less' : 'See More Categories'}</li>`;
+    }
+  }
+
+  toggleCategoriesExpanded() {
+    this.state.categoriesExpanded = !this.state.categoriesExpanded;
+    this.renderCategoriesFilter();
   }
 
   filterCategory(categorySlug) {

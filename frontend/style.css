@@ -543,6 +543,16 @@ main {
   font-weight: 600;
 }
 
+.filter-toggle {
+  color: var(--gold);
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+.filter-toggle:hover {
+  color: var(--gold-hover);
+}
+
 .search-bar-container {
   display: flex;
   margin-bottom: 5px;
