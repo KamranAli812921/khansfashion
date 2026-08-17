@@ -1185,6 +1185,49 @@ main {
     margin-right: 1rem;
   }
 
+  /* Responsive Cart Table on Mobile */
+  .cart-table,
+  .cart-table tbody,
+  .cart-table tr,
+  .cart-table td {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .cart-table thead {
+    display: none;
+  }
+
+  .cart-table tr {
+    border: 1px solid rgba(245, 242, 237, 0.05);
+    background-color: var(--charcoal);
+    margin-bottom: 1rem;
+    padding: 1rem;
+  }
+
+  .cart-table td {
+    border: none;
+    padding: 0.5rem 0;
+    text-align: left;
+  }
+
+  .cart-table td:nth-child(2)::before,
+  .cart-table td:nth-child(3)::before,
+  .cart-table td:nth-child(4)::before {
+    display: block;
+    font-weight: 600;
+    color: var(--gold);
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    letter-spacing: 1px;
+    margin-bottom: 0.35rem;
+  }
+
+  .cart-table td:nth-child(2)::before { content: "Quantity"; }
+  .cart-table td:nth-child(3)::before { content: "Total"; }
+  .cart-table td:nth-child(4)::before { content: "Remove"; }
+
   /* Align recent orders list items to the left on mobile */
   #admin-recent-orders-list td {
     justify-content: flex-start;
@@ -1264,6 +1307,13 @@ main {
     font-size: 0.75rem !important;
   }
   
+  /* Stack Checkout payment method options vertically on mobile
+     to prevent their labels from compressing and wrapping mid-word */
+  .payment-method-row {
+    flex-direction: column !important;
+    gap: 1rem !important;
+  }
+
   .tracking-card {
     padding: 1rem !important;
   }
@@ -1280,6 +1330,37 @@ main {
     padding-left: 0 !important;
     border-top: 1px solid rgba(245, 242, 237, 0.05);
     padding-top: 1.5rem;
+  }
+}
+
+/* Tablet / small-laptop nav collapse: prevents the fully-expanded nav
+   (Browse, Cart, Track Order, Profile, Admin, Sign Out) from overflowing
+   or wrapping on logged-in views at widths just above the mobile breakpoint. */
+@media (min-width: 769px) and (max-width: 960px) {
+  .hamburger-menu {
+    display: flex;
+  }
+  .nav-links {
+    display: none;
+    flex-direction: column;
+    position: absolute;
+    top: 100%;
+    right: -2rem;
+    width: 200px;
+    background-color: var(--charcoal);
+    border: 1px solid rgba(201, 162, 39, 0.2);
+    border-top: none;
+    padding: 1.5rem;
+    gap: 1.25rem;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    z-index: 1000;
+  }
+  .nav-links.active {
+    display: flex;
+  }
+  .nav-item {
+    width: 100%;
+    text-align: right;
   }
 }
 
