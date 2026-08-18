@@ -376,6 +376,35 @@ main {
   box-shadow: 0 0 0 1px var(--gold);
 }
 
+.password-input-wrap {
+  position: relative;
+}
+
+.password-input-wrap .form-input {
+  padding-right: 2.75rem;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  top: 50%;
+  right: 0.75rem;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--stone);
+  cursor: pointer;
+  transition: var(--transition-smooth);
+}
+
+.password-toggle-btn:hover,
+.password-toggle-btn.active {
+  color: var(--gold);
+}
+
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
