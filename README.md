@@ -35,22 +35,22 @@ Aura (customized for **Khan's Fashion**) has been enhanced with premium user-exp
 ## Directory Structure
 
 ```text
-├── AGENT.json         # Agent workspace configuration
-├── project.md         # Full project build specifications
-├── README.md          # Technical overview
-├── guide.md           # Client guide for running the system and admin portal
-├── backend/           # API backend application
-│   ├── models/        # MongoDB schemas (User, Product, Order, etc.)
-│   ├── routes/        # Route controllers (Auth, Products, Cart, Orders, etc.)
-│   ├── utils/         # Helpers (JWT auth, Email SMTP wrappers)
-│   ├── server.js      # Backend application entry point
-│   ├── package.json   # Backend dependencies
-│   └── .env           # Environment credentials (ignored by git)
-└── frontend/          # Single Page Application
-    ├── index.html     # Client markup template
-    ├── style.css      # Luxury brand design system stylesheet
+├── README.md              # Technical overview
+├── backend/                # API backend application
+│   ├── models/              # MongoDB schemas (User, Product, Order, Review, Category, etc.)
+│   ├── routes/               # Route controllers (Auth, Products, Cart, Orders, Reviews, Settings, Users, Feedback, Categories)
+│   ├── utils/                 # Helpers (JWT auth, Email dispatch, Cloudinary/local upload)
+│   ├── uploads/                # Local media storage fallback (used when Cloudinary is not configured)
+│   ├── server.js               # Backend application entry point
+│   ├── package.json            # Backend dependencies
+│   ├── .env.example            # Template for required/optional environment variables
+│   └── .env                    # Environment credentials (ignored by git)
+└── frontend/                # Single Page Application
+    ├── index.html              # Client markup template
+    ├── style.css                # Luxury brand design system stylesheet
+    ├── package.json              # Frontend dev tooling (Vite, optional - the backend also serves this folder statically)
     └── js/
-        └── app.js     # State controller, routing, and fetch requests
+        └── app.js                 # State controller, routing, and fetch requests
 ```
 
 ---
@@ -71,18 +71,32 @@ npm install
 ```
 
 ### 3. Environment Setup
-Configure your environment variables. Create a `.env` file in the `backend/` directory:
+Configure your environment variables. Copy `backend/.env.example` to `backend/.env` and fill in the values:
 ```env
 PORT=5000
 MONGODB_URI=mongodb://localhost:27017/ecommerce
 JWT_ACCESS_SECRET=your_jwt_access_secret_here
 JWT_REFRESH_SECRET=your_jwt_refresh_secret_here
 
-# Optional: Add SMTP config for email alerts (logs to console if empty)
+# Legacy secret used by the reviews route - keep in sync with JWT_ACCESS_SECRET
+JWT_SECRET=your_jwt_access_secret_here
+
+# Optional: Resend HTTP API for outbound email (preferred in production,
+# since it isn't blocked by hosts like Render that restrict outbound SMTP)
+RESEND_API_KEY=
+EMAIL_FROM="Khan's Fashion <onboarding@resend.dev>"
+
+# Optional: SMTP config for email alerts, used if RESEND_API_KEY is blank
+# (falls back to logging emails to the console if both are empty)
 EMAIL_HOST=
 EMAIL_PORT=
 EMAIL_USER=
 EMAIL_PASS=
+
+# Optional: Cloudinary for media uploads (falls back to local /uploads storage if blank)
+CLOUDINARY_CLOUD_NAME=
+CLOUDINARY_API_KEY=
+CLOUDINARY_API_SECRET=
 ```
 
 ### 4. Running the App
@@ -100,5 +114,4 @@ Once the console logs `Successfully connected to MongoDB`, open your web browser
 For ease of setup, **the very first user registered in the system automatically receives the `admin` role**. 
 - Register your admin account first via the Signup screen.
 - All subsequent registrations will be assigned the standard `customer` role.
-
-For step-by-step instructions on setting up bank accounts, managing inventory, uploading receipt screenshots, and confirming payments, please read the **[User & Admin Guide (guide.md)](file:///K:/Ecommerce/guide.md)**.
+- Once signed in as admin, bank accounts, inventory, receipt confirmations, and order/payment status are all managed from the Admin dashboard in the app itself.
