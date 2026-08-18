@@ -644,7 +644,7 @@ main {
 
 .product-detail-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 }
 
 .product-detail-media {
@@ -1109,7 +1109,7 @@ main {
     border-bottom: 2px solid var(--gold);
   }
   .product-detail-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
   .admin-dashboard-cards {
     grid-template-columns: repeat(2, 1fr);
