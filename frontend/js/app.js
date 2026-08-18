@@ -304,15 +304,7 @@ class AuraApp {
     if (viewName === 'admin') this.loadAdminDashboard();
 
     // Toggle WhatsApp support link visibility based on active view name
-    const waLink = document.getElementById('whatsapp-contact-link');
-    if (waLink) {
-      const num = this.state.adminSettings?.whatsappNumber;
-      if (num && num.trim() !== '' && viewName !== 'admin') {
-        waLink.style.display = 'flex';
-      } else {
-        waLink.style.display = 'none';
-      }
-    }
+    this.updateWhatsAppFAB();
   }
 
   // --- AUTH SECTION ---
@@ -1427,17 +1419,31 @@ class AuraApp {
 
   updateWhatsAppFAB() {
     const link = document.getElementById('whatsapp-contact-link');
-    if (!link) return;
+    const navLink = document.getElementById('whatsapp-contact-link-mobile');
+    if (!link && !navLink) return;
 
     const num = this.state.adminSettings?.whatsappNumber;
     const currentHash = window.location.hash.replace('#', '') || 'browse';
     if (num && num.trim() !== '' && currentHash !== 'admin') {
       const cleanNum = num.replace(/\D/g, '');
-      link.href = `https://wa.me/${cleanNum}`;
-      link.style.display = 'flex';
+      const href = `https://wa.me/${cleanNum}`;
+      if (link) {
+        link.href = href;
+        link.style.display = 'flex';
+      }
+      if (navLink) {
+        navLink.href = href;
+        navLink.closest('.nav-item').style.display = 'block';
+      }
     } else {
-      link.style.display = 'none';
-      link.href = '#';
+      if (link) {
+        link.style.display = 'none';
+        link.href = '#';
+      }
+      if (navLink) {
+        navLink.href = '#';
+        navLink.closest('.nav-item').style.display = 'none';
+      }
     }
   }
 

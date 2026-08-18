@@ -168,6 +168,11 @@ header {
   cursor: pointer;
 }
 
+/* WhatsApp nav link only appears in the mobile dropdown; desktop keeps the floating button */
+#nav-whatsapp a {
+  color: #25D366;
+}
+
 /* Hamburger Menu */
 .hamburger-menu {
   display: none;
@@ -1561,5 +1566,19 @@ main {
   100% {
     box-shadow: 0 0 0 0 rgba(37, 211, 102, 0);
     transform: scale(1);
+  }
+}
+
+/* Below 961px the nav collapses into the hamburger dropdown, so the WhatsApp
+   link lives there instead of as a floating button covering the storefront. */
+@media (max-width: 960px) {
+  .whatsapp-fab {
+    display: none !important;
+  }
+}
+
+@media (min-width: 961px) {
+  #nav-whatsapp {
+    display: none !important;
   }
 }
