@@ -37,6 +37,7 @@ class KhansFashionApp {
       activeProduct: null, // For details modal
       adminImages: [],
       adminVideos: [],
+      adminColorImageMap: {},
       adminOrders: []
     };
   }
@@ -177,6 +178,7 @@ class KhansFashionApp {
         }
         e.target.value = '';
         this.renderAdminMediaPreviews();
+        this.renderAdminColorImageMapping();
       });
     }
 
@@ -192,6 +194,12 @@ class KhansFashionApp {
         e.target.value = '';
         this.renderAdminMediaPreviews();
       });
+    }
+
+    // Rebuild the color->photo mapping UI whenever the colors list changes
+    const colorsInputEl = document.getElementById('admin-product-colors');
+    if (colorsInputEl) {
+      colorsInputEl.addEventListener('input', () => this.renderAdminColorImageMapping());
     }
   }
 
@@ -710,6 +718,22 @@ class KhansFashionApp {
     parent.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     this.state.selectedColor = color;
+
+    const prod = this.state.activeProduct;
+    if (!prod || !prod.colorImages || !prod.images) return;
+    const mapping = prod.colorImages.find(ci => ci.color === color);
+    const targetImage = mapping ? prod.images[mapping.imageIndex] : null;
+    if (!targetImage) return;
+
+    // Quick action modal shows a single static image - swap it directly
+    const quickImg = document.getElementById('quick-action-product-image');
+    if (quickImg) quickImg.src = targetImage;
+
+    // Full detail modal shows a slider - jump to the matching slide
+    if (this.state.sliderMedia && this.state.sliderMedia.length > 0) {
+      const slideIdx = this.state.sliderMedia.findIndex(m => m.type === 'image' && m.url === targetImage);
+      if (slideIdx !== -1) this.slideGo(slideIdx);
+    }
   }
 
   handleModalSizePriceChange(selectEl) {
@@ -836,7 +860,7 @@ class KhansFashionApp {
 
     container.innerHTML = `
       <div style="margin-bottom: 1.5rem; text-align: center;">
-        <img src="${prod.images[0] || 'https://images.unsplash.com/photo-1549298916-b41d501d3772?q=80&w=600'}" alt="${prod.name}" style="width: 120px; height: 120px; object-fit: cover; margin: 0 auto 1rem; display: block; border-radius: 0; border: 1px solid rgba(245,242,237,0.1);">
+        <img id="quick-action-product-image" src="${prod.images[0] || 'https://images.unsplash.com/photo-1549298916-b41d501d3772?q=80&w=600'}" alt="${prod.name}" style="width: 120px; height: 120px; object-fit: cover; margin: 0 auto 1rem; display: block; border-radius: 0; border: 1px solid rgba(245,242,237,0.1);">
         <h3 style="font-family: var(--font-display); font-size: 1.6rem; color: var(--ivory); margin-bottom: 0.5rem; text-align: center;">${prod.name}</h3>
         <p id="quick-action-price-display" style="color: var(--gold); font-weight: 600; font-size: 1.1rem; text-align: center; font-family: var(--font-body);">PKR ${displayPrice.toLocaleString()}</p>
       </div>
@@ -2536,12 +2560,70 @@ class KhansFashionApp {
 
   removeAdminImage(idx) {
     this.state.adminImages.splice(idx, 1);
+
+    // Shift color->image index mappings so they still point at the right photo,
+    // and drop any mapping that pointed at the photo just removed.
+    const map = this.state.adminColorImageMap || {};
+    const updatedMap = {};
+    Object.keys(map).forEach(color => {
+      const mappedIdx = map[color];
+      if (mappedIdx === idx) return;
+      updatedMap[color] = mappedIdx > idx ? mappedIdx - 1 : mappedIdx;
+    });
+    this.state.adminColorImageMap = updatedMap;
+
     this.renderAdminMediaPreviews();
+    this.renderAdminColorImageMapping();
   }
 
   removeAdminVideo(idx) {
     this.state.adminVideos.splice(idx, 1);
     this.renderAdminMediaPreviews();
+  }
+
+  renderAdminColorImageMapping() {
+    const group = document.getElementById('admin-color-image-mapping-group');
+    const container = document.getElementById('admin-color-image-mapping-container');
+    if (!group || !container) return;
+
+    const colorsInput = document.getElementById('admin-product-colors').value;
+    const colors = colorsInput.split(',').map(c => c.trim()).filter(Boolean);
+    const images = this.state.adminImages || [];
+
+    if (colors.length === 0 || images.length === 0) {
+      group.style.display = 'none';
+      container.innerHTML = '';
+      return;
+    }
+
+    group.style.display = 'block';
+    const map = this.state.adminColorImageMap || {};
+
+    container.innerHTML = colors.map(color => {
+      const selectedIdx = map[color];
+      const hasSelection = selectedIdx !== undefined && images[selectedIdx];
+      return `
+        <div style="display:flex; align-items:center; gap:0.6rem;">
+          <span style="min-width:90px; font-size:0.85rem; color:var(--ivory);">${escapeHtml(color)}</span>
+          <select class="form-input admin-color-image-select" data-color="${escapeHtml(color)}" style="padding:0.35rem; flex-grow:1; margin:0;" onchange="app.updateAdminColorImageMap(this)">
+            <option value="">-- No photo --</option>
+            ${images.map((img, idx) => `<option value="${idx}" ${String(selectedIdx) === String(idx) ? 'selected' : ''}>Photo ${idx + 1}</option>`).join('')}
+          </select>
+          ${hasSelection ? `<img src="${images[selectedIdx]}" style="width:36px; height:36px; object-fit:cover; border-radius:3px; border:1px solid rgba(245,242,237,0.1);">` : ''}
+        </div>
+      `;
+    }).join('');
+  }
+
+  updateAdminColorImageMap(selectEl) {
+    const color = selectEl.dataset.color;
+    if (!this.state.adminColorImageMap) this.state.adminColorImageMap = {};
+    if (selectEl.value === '') {
+      delete this.state.adminColorImageMap[color];
+    } else {
+      this.state.adminColorImageMap[color] = parseInt(selectEl.value, 10);
+    }
+    this.renderAdminColorImageMapping();
   }
 
   // --- PRODUCTS CRUD ---
@@ -2582,6 +2664,7 @@ class KhansFashionApp {
     this.hideProductForm(); // Clear fields
     document.getElementById('admin-product-sizes').value = '';
     document.getElementById('admin-product-colors').value = '';
+    this.renderAdminColorImageMapping();
     document.getElementById('admin-product-form-container').style.display = 'block';
     document.getElementById('admin-product-form-title').innerText = 'Add New Product';
     
@@ -2646,6 +2729,15 @@ class KhansFashionApp {
         this.state.adminVideos = prod.videos || [];
         this.renderAdminMediaPreviews();
 
+        // Load existing color->photo mapping
+        this.state.adminColorImageMap = {};
+        if (prod.colorImages && prod.colorImages.length > 0) {
+          prod.colorImages.forEach(ci => {
+            this.state.adminColorImageMap[ci.color] = ci.imageIndex;
+          });
+        }
+        this.renderAdminColorImageMapping();
+
         const select = document.getElementById('admin-product-category');
         select.innerHTML = `<option value="" ${!prod.category || prod.category === 'uncategorized' ? 'selected' : ''}>-- No Category (Uncategorized) --</option>` + 
           this.state.allCategories.map(c => `
@@ -2671,7 +2763,9 @@ class KhansFashionApp {
     // Clear files state and previews
     this.state.adminImages = [];
     this.state.adminVideos = [];
+    this.state.adminColorImageMap = {};
     this.renderAdminMediaPreviews();
+    this.renderAdminColorImageMapping();
     document.getElementById('admin-product-size-prices-body').innerHTML = '';
     
     // Reset file input values
@@ -2710,16 +2804,22 @@ class KhansFashionApp {
       }
     });
 
+    // Only keep color->photo mappings for colors that are still in the current colors list
+    const colorImages = Object.keys(this.state.adminColorImageMap || {})
+      .filter(color => colors.includes(color))
+      .map(color => ({ color, imageIndex: this.state.adminColorImageMap[color] }));
+
     const payload = {
-      name, 
-      category, 
-      price, 
-      discountPrice, 
-      isOnSale, 
+      name,
+      category,
+      price,
+      discountPrice,
+      isOnSale,
       sizes,
       colors,
-      description, 
-      images: this.state.adminImages, 
+      colorImages,
+      description,
+      images: this.state.adminImages,
       videos: this.state.adminVideos,
       sizePrices
     };

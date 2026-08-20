@@ -76,7 +76,7 @@ router.get('/products/:id', async (req, res) => {
 // @desc    Create a new product (Admin only)
 router.post('/admin/products', authenticateToken, requireAdmin, async (req, res) => {
   try {
-    const { name, description, price, discountPrice, category, images, videos, isOnSale, sizes, colors, sizePrices } = req.body;
+    const { name, description, price, discountPrice, category, images, videos, isOnSale, sizes, colors, sizePrices, colorImages } = req.body;
 
     if (!name || !description || !price) {
       return res.status(400).json({ message: 'Please enter all required fields' });
@@ -84,6 +84,12 @@ router.post('/admin/products', authenticateToken, requireAdmin, async (req, res)
 
     const processedImages = await processMedia(images, 'products');
     const processedVideos = await processMedia(videos, 'products');
+
+    // Only keep color->image mappings that point at an image that actually exists,
+    // since imageIndex refers to a position in the images array supplied above.
+    const validColorImages = Array.isArray(colorImages)
+      ? colorImages.filter(ci => ci && typeof ci.color === 'string' && Number.isInteger(ci.imageIndex) && ci.imageIndex >= 0 && ci.imageIndex < processedImages.length)
+      : [];
 
     const product = new Product({
       name,
@@ -96,6 +102,7 @@ router.post('/admin/products', authenticateToken, requireAdmin, async (req, res)
       isOnSale: isOnSale || false,
       sizes: sizes || [],
       colors: colors || [],
+      colorImages: validColorImages,
       sizePrices: sizePrices || []
     });
 
@@ -160,7 +167,16 @@ router.patch('/admin/products/:id', authenticateToken, requireAdmin, async (req,
     if (fieldsToUpdate.videos) {
       fieldsToUpdate.videos = await processMedia(fieldsToUpdate.videos, 'products');
     }
-    
+
+    if (fieldsToUpdate.colorImages) {
+      // Only keep mappings pointing at an image that exists in the (possibly just-updated) images array
+      const imagesLength = Array.isArray(fieldsToUpdate.images) ? fieldsToUpdate.images.length : undefined;
+      fieldsToUpdate.colorImages = fieldsToUpdate.colorImages.filter(ci =>
+        ci && typeof ci.color === 'string' && Number.isInteger(ci.imageIndex) && ci.imageIndex >= 0 &&
+        (imagesLength === undefined || ci.imageIndex < imagesLength)
+      );
+    }
+
     // Perform standard Mongoose update
     const product = await Product.findByIdAndUpdate(
       req.params.id,
