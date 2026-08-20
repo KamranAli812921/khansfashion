@@ -1,10 +1,10 @@
-# AURA — E-Commerce Retail Platform
+# Khan's Fashion — E-Commerce Retail Platform
 
-A premium, two-sided (client + admin) e-commerce platform designed for physical-product businesses in Pakistan. Aura features own-inventory management, manual payment confirmation (Cash on Delivery + Bank Transfer), and live client order tracking.
+A premium, two-sided (client + admin) e-commerce platform designed for physical-product businesses in Pakistan. Khan's Fashion features own-inventory management, manual payment confirmation (Cash on Delivery + Bank Transfer), and live client order tracking.
 
 ## Technical Architecture
 
-- **Backend**: Node.js & Express API, JWT authentication, Bcrypt password hashing, and Nodemailer email triggers (OTP & Admin alerts).
+- **Backend**: Node.js & Express API, JWT authentication, Bcrypt password hashing, rate-limited auth endpoints, and Resend email triggers (OTP & Admin alerts).
 - **Database**: MongoDB (Local or Atlas cloud tier) using Mongoose ODM.
 - **Frontend**: Clean, responsive Single Page Application (SPA) using vanilla HTML5, CSS3, and ES6 JavaScript, styled with an ink-black and gold luxury design system.
 - **Hosting-friendly**: The Express backend serves the static frontend assets automatically out-of-the-box.
@@ -13,7 +13,7 @@ A premium, two-sided (client + admin) e-commerce platform designed for physical-
 
 ## Key Features & Platform Enhancements
 
-Aura (customized for **Khan's Fashion**) has been enhanced with premium user-experience and administrative workflows:
+Khan's Fashion has been enhanced with premium user-experience and administrative workflows:
 
 1. **Branded Customer Notifications**:
    - **Automated Emails**: Creating a new product automatically dispatches styled HTML notification emails to all registered customers under the brand name **"Khan's Fashion"**.
@@ -25,10 +25,19 @@ Aura (customized for **Khan's Fashion**) has been enhanced with premium user-exp
    - **Compact Dashboards**: Tightened padding, text sizes, and select dropdown constraints inside the admin operations views.
 3. **Storefront Product Pagination**:
    - Catalog displays are limited to **20 products per page** with next/prev buttons and numeric index buttons.
-4. **Optimized Operations**:
+4. **Cart & Checkout**:
+   - **Order Confirmation Step**: Proceeding to checkout opens a review modal where items can still be adjusted or removed and the real, current price is shown before confirming.
+   - **Guest Order Tracking**: Any order can be looked up by its ID (e.g. from a QR code) without signing in, showing live status, items, and payment progress.
+5. **Product Reviews**:
+   - Customers can leave a rating and comment on a product only after a delivered order containing it, one review per product per customer; admins can reply from the dashboard.
+6. **Optimized Operations**:
    - **Optional Last Name**: Customer registrations and profile edits no longer require a mandatory last name.
    - **Auto-Receipt for COD**: Marking a Cash-On-Delivery (COD) order as "delivered" automatically updates its payment status to "received".
    - **Compact Bank settings**: Stacks bank details vertically on mobile screen widths and adds clean "Delete Account" buttons.
+7. **Security Hardening**:
+   - Order totals are always recalculated server-side from the product catalog, so a tampered checkout request can't change what's actually charged.
+   - Login, signup, and OTP endpoints are rate-limited to resist brute-force/guessing attacks.
+   - User-supplied text (addresses, names, review/feedback content) is HTML-escaped everywhere it's displayed, preventing stored XSS.
 
 ---
 
@@ -78,20 +87,10 @@ MONGODB_URI=mongodb://localhost:27017/ecommerce
 JWT_ACCESS_SECRET=your_jwt_access_secret_here
 JWT_REFRESH_SECRET=your_jwt_refresh_secret_here
 
-# Legacy secret used by the reviews route - keep in sync with JWT_ACCESS_SECRET
-JWT_SECRET=your_jwt_access_secret_here
-
-# Optional: Resend HTTP API for outbound email (preferred in production,
-# since it isn't blocked by hosts like Render that restrict outbound SMTP)
+# Resend HTTP API - used for all outbound email (OTPs & admin alerts).
+# Falls back to logging emails to the console (mock mode) if blank.
 RESEND_API_KEY=
 EMAIL_FROM="Khan's Fashion <onboarding@resend.dev>"
-
-# Optional: SMTP config for email alerts, used if RESEND_API_KEY is blank
-# (falls back to logging emails to the console if both are empty)
-EMAIL_HOST=
-EMAIL_PORT=
-EMAIL_USER=
-EMAIL_PASS=
 
 # Optional: Cloudinary for media uploads (falls back to local /uploads storage if blank)
 CLOUDINARY_CLOUD_NAME=

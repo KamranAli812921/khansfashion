@@ -14,13 +14,13 @@ function escapeHtml(str) {
     .replace(/'/g, '&#39;');
 }
 
-class AuraApp {
+class KhansFashionApp {
   constructor() {
     this.state = {
-      user: JSON.parse(localStorage.getItem('aura_user')) || null,
-      accessToken: localStorage.getItem('aura_access_token') || null,
-      refreshToken: localStorage.getItem('aura_refresh_token') || null,
-      cart: JSON.parse(localStorage.getItem('aura_cart')) || [],
+      user: JSON.parse(localStorage.getItem('kf_user')) || null,
+      accessToken: localStorage.getItem('kf_access_token') || null,
+      refreshToken: localStorage.getItem('kf_refresh_token') || null,
+      cart: JSON.parse(localStorage.getItem('kf_cart')) || [],
       categories: [],
       allCategories: [],
       products: [],
@@ -42,7 +42,7 @@ class AuraApp {
   }
 
   init() {
-    console.log('Aura App initializing...');
+    console.log("Khan's Fashion App initializing...");
     
     // Set up auth state UI
     this.updateAuthNavUI();
@@ -497,9 +497,9 @@ class AuraApp {
     this.state.accessToken = accessToken;
     this.state.refreshToken = refreshToken;
 
-    localStorage.setItem('aura_user', JSON.stringify(user));
-    localStorage.setItem('aura_access_token', accessToken);
-    localStorage.setItem('aura_refresh_token', refreshToken);
+    localStorage.setItem('kf_user', JSON.stringify(user));
+    localStorage.setItem('kf_access_token', accessToken);
+    localStorage.setItem('kf_refresh_token', refreshToken);
 
     this.updateAuthNavUI();
     this.syncCartBackend();
@@ -511,10 +511,10 @@ class AuraApp {
     this.state.refreshToken = null;
     this.state.cart = [];
 
-    localStorage.removeItem('aura_user');
-    localStorage.removeItem('aura_access_token');
-    localStorage.removeItem('aura_refresh_token');
-    localStorage.removeItem('aura_cart');
+    localStorage.removeItem('kf_user');
+    localStorage.removeItem('kf_access_token');
+    localStorage.removeItem('kf_refresh_token');
+    localStorage.removeItem('kf_cart');
 
     this.updateAuthNavUI();
     this.updateCartCountUI();
@@ -908,7 +908,7 @@ class AuraApp {
       });
     }
 
-    localStorage.setItem('aura_cart', JSON.stringify(this.state.cart));
+    localStorage.setItem('kf_cart', JSON.stringify(this.state.cart));
     this.updateCartCountUI();
     this.syncCartBackend();
 
@@ -1073,7 +1073,8 @@ class AuraApp {
             ${originalPriceText}
           </div>
 
-          <p class="product-detail-desc">${prod.description}</p>
+          <p class="product-detail-desc desc-collapsed" id="product-detail-desc">${escapeHtml(prod.description)}</p>
+          <button type="button" id="desc-toggle-btn" class="desc-toggle-btn" style="display:none;" onclick="app.toggleProductDescription()">See More</button>
 
           ${sizesHTML}
           ${colorsHTML}
@@ -1135,6 +1136,29 @@ class AuraApp {
     this.loadProductReviews(prod._id);
 
     modal.classList.add('active');
+
+    this.setupDescriptionToggle();
+  }
+
+  // Shows the "See More" toggle only when the description actually overflows
+  // its clamped height - short descriptions never get a pointless button.
+  setupDescriptionToggle() {
+    const descEl = document.getElementById('product-detail-desc');
+    const btn = document.getElementById('desc-toggle-btn');
+    if (!descEl || !btn) return;
+
+    descEl.classList.add('desc-collapsed');
+    btn.textContent = 'See More';
+    btn.style.display = descEl.scrollHeight > descEl.clientHeight + 1 ? 'inline-block' : 'none';
+  }
+
+  toggleProductDescription() {
+    const descEl = document.getElementById('product-detail-desc');
+    const btn = document.getElementById('desc-toggle-btn');
+    if (!descEl || !btn) return;
+
+    const isCollapsed = descEl.classList.toggle('desc-collapsed');
+    btn.textContent = isCollapsed ? 'See More' : 'See Less';
   }
 
   slideNext() {
@@ -1230,7 +1254,7 @@ class AuraApp {
     this.state.selectedSize = null;
     this.state.selectedColor = null;
 
-    localStorage.setItem('aura_cart', JSON.stringify(this.state.cart));
+    localStorage.setItem('kf_cart', JSON.stringify(this.state.cart));
     this.updateCartCountUI();
     this.syncCartBackend();
     this.showAlert(`"${prod.name}" added to cart.`, 'gold');
@@ -1282,7 +1306,7 @@ class AuraApp {
             size: item.size || null,
             color: item.color || null
           }));
-          localStorage.setItem('aura_cart', JSON.stringify(this.state.cart));
+          localStorage.setItem('kf_cart', JSON.stringify(this.state.cart));
           this.updateCartCountUI();
         }
       } catch (err) {
@@ -1481,7 +1505,7 @@ class AuraApp {
     }
 
     item.qty = newQty;
-    localStorage.setItem('aura_cart', JSON.stringify(this.state.cart));
+    localStorage.setItem('kf_cart', JSON.stringify(this.state.cart));
     this.updateCartCountUI();
 
     if (this.state.user) {
@@ -1502,7 +1526,7 @@ class AuraApp {
     const size = sizeVal || null;
     const color = colorVal || null;
     this.state.cart = this.state.cart.filter(item => !(item.productId === productId && item.size === size && item.color === color));
-    localStorage.setItem('aura_cart', JSON.stringify(this.state.cart));
+    localStorage.setItem('kf_cart', JSON.stringify(this.state.cart));
     this.updateCartCountUI();
 
     if (this.state.user) {
@@ -1637,7 +1661,7 @@ class AuraApp {
         
         // Clear local cart
         this.state.cart = [];
-        localStorage.removeItem('aura_cart');
+        localStorage.removeItem('kf_cart');
         this.updateCartCountUI();
 
         // Navigate to tracking page for this order
@@ -1940,7 +1964,7 @@ class AuraApp {
         this.showAlert('Profile updated successfully!', 'success');
         // Update user state
         this.state.user = data.user;
-        localStorage.setItem('aura_user', JSON.stringify(this.state.user));
+        localStorage.setItem('kf_user', JSON.stringify(this.state.user));
         this.closeEditProfileModal();
         this.loadProfileData(); // Refresh read-only UI
       } else {
@@ -3228,7 +3252,7 @@ class AuraApp {
 }
 
 // Instantiate and expose globally
-const app = new AuraApp();
+const app = new KhansFashionApp();
 window.app = app;
 
 document.addEventListener('DOMContentLoaded', () => {

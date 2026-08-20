@@ -702,6 +702,33 @@ main {
   font-size: 0.9rem;
   margin: 1rem 0; /* Tightened margin spacing */
   line-height: 1.4; /* Tightened line height */
+  white-space: pre-wrap; /* preserve admin-entered line breaks */
+  word-break: break-word;
+}
+
+.product-detail-desc.desc-collapsed {
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.desc-toggle-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: -0.5rem 0 1rem;
+  display: inline-block;
+  color: var(--gold);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.desc-toggle-btn:hover {
+  color: var(--gold-hover);
 }
 
 .product-stock {

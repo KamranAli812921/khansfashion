@@ -221,7 +221,7 @@ router.get('/seed', authenticateToken, requireAdmin, async (req, res) => {
     // Seed products
     const products = await Product.insertMany([
       {
-        name: 'Aura Sovereign Gold Watch',
+        name: "Khan's Sovereign Gold Watch",
         description: 'An exquisite watch with real 24k gold bezel finish, sapphire glass, and a premium black leather strap.',
         price: 85000,
         category: 'luxury-watches',
