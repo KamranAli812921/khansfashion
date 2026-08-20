@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
+const rateLimit = require('express-rate-limit');
 const User = require('../models/User');
 const OTP = require('../models/OTP');
 const { sendEmail } = require('../utils/email');
@@ -11,14 +12,36 @@ const generateOTP = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
+// Login/signup abuse is throttled per IP: without this, a 6-digit OTP or a
+// user's password can be brute-forced directly against the API with no lockout.
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many attempts. Please try again in a few minutes.' }
+});
+
+const otpLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many OTP attempts. Please try again in a few minutes.' }
+});
+
 // @route   POST /auth/signup
 // @desc    Register user (defaults to customer, requires verification)
-router.post('/signup', async (req, res) => {
+router.post('/signup', authLimiter, async (req, res) => {
   try {
     const { firstName, lastName, email, phone, password, address } = req.body;
 
     if (!firstName || !email || !phone || !password) {
       return res.status(400).json({ message: 'Please enter all required fields' });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ message: 'Password must be at least 6 characters long' });
     }
 
     const existingUser = await User.findOne({ email });
@@ -110,7 +133,7 @@ router.post('/signup', async (req, res) => {
 
 // @route   POST /auth/verify-otp
 // @desc    Verify OTP and activate user account
-router.post('/verify-otp', async (req, res) => {
+router.post('/verify-otp', otpLimiter, async (req, res) => {
   try {
     const { email, otp } = req.body;
 
@@ -161,7 +184,7 @@ router.post('/verify-otp', async (req, res) => {
 
 // @route   POST /auth/login
 // @desc    Login user & return JWT tokens
-router.post('/login', async (req, res) => {
+router.post('/login', authLimiter, async (req, res) => {
   try {
     const { email, password } = req.body;
 

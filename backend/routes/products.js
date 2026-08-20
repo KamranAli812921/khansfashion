@@ -35,7 +35,11 @@ router.get('/products', async (req, res) => {
     }
 
     if (search) {
-      query.name = { $regex: search, $options: 'i' }; // Case-insensitive regex search
+      // Escape regex metacharacters so user input is matched literally -
+      // passing it straight through let a crafted pattern trigger catastrophic
+      // backtracking (ReDoS) against every document.
+      const escapedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      query.name = { $regex: escapedSearch, $options: 'i' };
     }
 
     if (isOnSale === 'true') {
@@ -197,8 +201,10 @@ router.delete('/admin/products/:id', authenticateToken, requireAdmin, async (req
 });
 
 // @route   GET /seed
-// @desc    Seed categories, products, and bank accounts settings for testing
-router.get('/seed', async (req, res) => {
+// @desc    Seed categories, products, and bank accounts settings for testing (Admin only)
+// This wipes ALL existing categories/products/settings, so it must never be reachable
+// without admin auth - it was previously public and could be used to destroy the catalog.
+router.get('/seed', authenticateToken, requireAdmin, async (req, res) => {
   try {
     // Delete existing categories, products, adminsettings
     await Category.deleteMany({});

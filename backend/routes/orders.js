@@ -24,24 +24,53 @@ if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && proce
 // @desc    Place a new order (Checkout)
 router.post('/orders', authenticateToken, async (req, res) => {
   try {
-    const { items, total, address, paymentMethod } = req.body;
+    const { items, address, paymentMethod } = req.body;
 
-    if (!items || items.length === 0 || !total || !address || !paymentMethod) {
+    if (!items || items.length === 0 || !address || !paymentMethod) {
       return res.status(400).json({ message: 'Order details are incomplete' });
     }
 
-    // 1. Verify product exists
+    // 1. Re-derive each item's price from the authoritative product record.
+    // The client-supplied price/total are never trusted, otherwise a
+    // tampered request body could check out at an arbitrary price.
+    const verifiedItems = [];
+    let total = 0;
+
     for (const item of items) {
       const product = await Product.findById(item.productId);
       if (!product) {
-        return res.status(404).json({ message: `Product "${item.name}" not found` });
+        return res.status(404).json({ message: `Product "${item.name || item.productId}" not found` });
       }
+
+      const qty = parseInt(item.qty, 10);
+      if (!Number.isInteger(qty) || qty < 1) {
+        return res.status(400).json({ message: `Invalid quantity for "${product.name}"` });
+      }
+
+      let price = product.isOnSale && product.discountPrice ? product.discountPrice : product.price;
+      if (product.sizePrices && product.sizePrices.length > 0 && item.size) {
+        const matchingSizePrice = product.sizePrices.find(sp => sp.size === item.size);
+        if (matchingSizePrice) {
+          price = matchingSizePrice.discountPrice || matchingSizePrice.price;
+        }
+      }
+
+      verifiedItems.push({
+        productId: product._id,
+        name: product.name,
+        qty,
+        price,
+        size: item.size || null,
+        color: item.color || null
+      });
+
+      total += price * qty;
     }
 
     // 2. Create the order
     const order = new Order({
       customerId: req.user.userId,
-      items,
+      items: verifiedItems,
       total,
       address,
       paymentMethod,

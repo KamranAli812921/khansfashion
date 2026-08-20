@@ -1,5 +1,19 @@
 const API_URL = window.location.protocol.startsWith('http') ? window.location.origin : 'http://localhost:5000';
 
+// Escapes user-supplied text before it is interpolated into innerHTML templates.
+// Without this, content like order addresses, account names, or review/feedback
+// text could inject a <script>/onerror payload that runs in another visitor's
+// (including the admin's) browser and steals their session token from localStorage.
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 class AuraApp {
   constructor() {
     this.state = {
@@ -1353,7 +1367,103 @@ class AuraApp {
           <span>Total</span>
           <span>PKR ${subtotal.toLocaleString()}</span>
         </div>
-        <button class="btn btn-primary" style="width: 100%; margin-top: 1.5rem;" onclick="app.showView('checkout')">Proceed to Checkout</button>
+        <button class="btn btn-primary" style="width: 100%; margin-top: 1.5rem;" onclick="app.openOrderConfirmModal()">Proceed to Checkout</button>
+      </div>
+    `;
+  }
+
+  openOrderConfirmModal() {
+    if (this.state.cart.length === 0) {
+      this.showAlert('Your cart is empty.', 'rose-gold');
+      return;
+    }
+    this.renderOrderConfirmModal();
+    document.getElementById('order-confirm-modal').classList.add('active');
+  }
+
+  closeOrderConfirmModal() {
+    document.getElementById('order-confirm-modal').classList.remove('active');
+  }
+
+  confirmOrderAndProceed() {
+    if (this.state.cart.length === 0) {
+      this.showAlert('Your cart is empty.', 'rose-gold');
+      return;
+    }
+    this.closeOrderConfirmModal();
+    this.showView('checkout');
+  }
+
+  renderOrderConfirmModal() {
+    const container = document.getElementById('order-confirm-container');
+    if (!container) return;
+
+    if (this.state.cart.length === 0) {
+      container.innerHTML = `
+        <div style="text-align: center; padding: 2rem 0;">
+          <p style="color: var(--stone); margin-bottom: 1.5rem;">Your cart is now empty.</p>
+          <button class="btn btn-primary" onclick="app.closeOrderConfirmModal(); app.showView('browse');">Browse Collection</button>
+        </div>
+      `;
+      return;
+    }
+
+    let itemsHTML = '';
+    let subtotal = 0;
+
+    this.state.cart.forEach(item => {
+      const lineTotal = item.price * item.qty;
+      subtotal += lineTotal;
+      itemsHTML += `
+        <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem 0; border-bottom: 1px solid rgba(245,242,237,0.05);">
+          <div class="cart-item-title">
+            <img src="${item.image}" alt="${item.name}" class="cart-item-thumb">
+            <div>
+              <h4 style="font-family: var(--font-body); font-size: 1rem; font-weight: 500;">${item.name}</h4>
+              ${item.size || item.color ? `
+                <p style="font-size: 0.8rem; color: var(--gold); margin-top: 0.15rem;">
+                  ${item.size ? `Size: ${item.size}` : ''}
+                  ${item.size && item.color ? ' | ' : ''}
+                  ${item.color ? `Color: ${item.color}` : ''}
+                </p>
+              ` : ''}
+              <p style="color: var(--stone); font-size: 0.8rem; margin-top: 0.25rem;">PKR ${item.price.toLocaleString()} each</p>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 1.5rem;">
+            <div class="qty-control">
+              <button class="qty-btn" onclick="app.updateCartQty('${item.productId}', -1, '${item.size || ''}', '${item.color || ''}')">-</button>
+              <input type="text" class="qty-input" value="${item.qty}" readonly>
+              <button class="qty-btn" onclick="app.updateCartQty('${item.productId}', 1, '${item.size || ''}', '${item.color || ''}')">+</button>
+            </div>
+            <span style="color: var(--gold); font-weight: 600; min-width: 90px; text-align: right;">PKR ${lineTotal.toLocaleString()}</span>
+            <button class="btn btn-danger" style="padding: 0.4rem 0.8rem; font-size: 0.7rem;" onclick="app.removeCartItem('${item.productId}', '${item.size || ''}', '${item.color || ''}')">&times;</button>
+          </div>
+        </div>
+      `;
+    });
+
+    container.innerHTML = `
+      <h3 style="font-family: var(--font-display); font-size: 1.6rem; color: var(--gold); margin-bottom: 0.5rem;">Confirm Your Order</h3>
+      <p style="color: var(--stone); font-size: 0.85rem; margin-bottom: 1rem;">Please review your items below. You can adjust quantities or remove products before continuing.</p>
+      <div>${itemsHTML}</div>
+      <div class="cart-totals" style="width: 100%; margin-left: 0;">
+        <div class="totals-row">
+          <span>Subtotal</span>
+          <span>PKR ${subtotal.toLocaleString()}</span>
+        </div>
+        <div class="totals-row">
+          <span>Delivery</span>
+          <span style="color: var(--success); font-weight: 500;">FREE</span>
+        </div>
+        <div class="totals-row grand-total">
+          <span>Total</span>
+          <span>PKR ${subtotal.toLocaleString()}</span>
+        </div>
+      </div>
+      <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+        <button class="btn btn-secondary" style="flex: 1;" onclick="app.closeOrderConfirmModal()">Continue Shopping</button>
+        <button class="btn btn-primary" style="flex: 1;" onclick="app.confirmOrderAndProceed()">Confirm Order</button>
       </div>
     `;
   }
@@ -1385,6 +1495,7 @@ class AuraApp {
       }
     }
     this.renderCart();
+    this.renderOrderConfirmModal();
   }
 
   async removeCartItem(productId, sizeVal = '', colorVal = '') {
@@ -1405,6 +1516,7 @@ class AuraApp {
       }
     }
     this.renderCart();
+    this.renderOrderConfirmModal();
   }
 
   // --- CHECKOUT FLOW ---
@@ -1657,9 +1769,9 @@ class AuraApp {
 
           <div class="tracking-col-right">
             <h4 style="font-family:var(--font-body); font-size:0.9rem; text-transform:uppercase; color:var(--gold); margin-bottom: 1rem; border-bottom:1px solid rgba(201,162,39,0.1); padding-bottom:4px;">Delivery Address</h4>
-            <p style="font-size:0.9rem; color:var(--ivory);">${order.address.street}</p>
-            <p style="font-size:0.9rem; color:var(--stone);">${order.address.area}</p>
-            <p style="font-size:0.9rem; color:var(--stone);">${order.address.city}</p>
+            <p style="font-size:0.9rem; color:var(--ivory);">${escapeHtml(order.address.street)}</p>
+            <p style="font-size:0.9rem; color:var(--stone);">${escapeHtml(order.address.area)}</p>
+            <p style="font-size:0.9rem; color:var(--stone);">${escapeHtml(order.address.city)}</p>
 
             <h4 style="font-family:var(--font-body); font-size:0.9rem; text-transform:uppercase; color:var(--gold); margin-top: 2rem; margin-bottom: 1rem; border-bottom:1px solid rgba(201,162,39,0.1); padding-bottom:4px;">Payment Summary</h4>
             <p style="font-size:0.9rem;">Method: <span style="font-weight:600; text-transform:uppercase;">${order.paymentMethod.replace('_', ' ')}</span></p>
@@ -1893,7 +2005,7 @@ class AuraApp {
         list.innerHTML = recentOrders.map(ord => `
           <tr>
             <td data-label="Order ID" style="font-family: monospace;">${ord._id}</td>
-            <td data-label="Customer">${ord.customerId?.firstName || 'Guest'} ${ord.customerId?.lastName || ''}</td>
+            <td data-label="Customer">${escapeHtml(ord.customerId?.firstName || 'Guest')} ${escapeHtml(ord.customerId?.lastName || '')}</td>
             <td data-label="Total" style="color:var(--gold); font-weight:600;">PKR ${ord.total.toLocaleString()}</td>
             <td data-label="Payment" style="text-transform:uppercase;">${ord.paymentMethod} (${ord.paymentStatus})</td>
             <td data-label="Status"><span class="status-tag status-${ord.orderStatus}">${ord.orderStatus}</span></td>
@@ -1943,14 +2055,14 @@ class AuraApp {
             <tr>
               <td data-label="Order Details">
                 <strong style="font-family:monospace; font-size:0.75rem;">ID: ${ord._id}</strong><br>
-                <span style="color:var(--stone); font-size:0.7rem;">Customer: ${ord.customerId?.firstName || 'Guest'} (${ord.customerId?.phone || ''})</span>
+                <span style="color:var(--stone); font-size:0.7rem;">Customer: ${escapeHtml(ord.customerId?.firstName || 'Guest')} (${escapeHtml(ord.customerId?.phone || '')})</span>
                 <div style="margin-top:0.35rem; padding-left:0.4rem; border-left:1px solid var(--stone); font-size:0.7rem; color:var(--stone);">
                   ${itemsList}
                 </div>
               </td>
               <td data-label="Delivery Address" style="font-size:0.7rem; color:var(--stone);">
-                ${ord.address.street}, ${ord.address.area}<br>
-                <strong>${ord.address.city}</strong>
+                ${escapeHtml(ord.address.street)}, ${escapeHtml(ord.address.area)}<br>
+                <strong>${escapeHtml(ord.address.city)}</strong>
               </td>
               <td data-label="Payment Info">
                 <span style="text-transform:uppercase; font-size:0.7rem; font-weight:600;">${ord.paymentMethod.replace('_', ' ')}</span><br>
@@ -2286,15 +2398,15 @@ class AuraApp {
             <!-- Left Side (Customer Details) -->
             <div class="customer-details">
               <div class="section-heading">Customer Details</div>
-              <div><strong>Name:</strong> ${ord.customerId?.firstName || 'Guest'} ${ord.customerId?.lastName || ''}</div>
-              <div><strong>Phone:</strong> <span style="font-size: 11px; font-weight: bold; border-bottom: 1px solid #000;">${ord.customerId?.phone || 'N/A'}</span></div>
-              <div><strong>Email:</strong> ${ord.customerId?.email || 'N/A'}</div>
+              <div><strong>Name:</strong> ${escapeHtml(ord.customerId?.firstName || 'Guest')} ${escapeHtml(ord.customerId?.lastName || '')}</div>
+              <div><strong>Phone:</strong> <span style="font-size: 11px; font-weight: bold; border-bottom: 1px solid #000;">${escapeHtml(ord.customerId?.phone || 'N/A')}</span></div>
+              <div><strong>Email:</strong> ${escapeHtml(ord.customerId?.email || 'N/A')}</div>
               
               <div class="section-heading" style="margin-top: 10px;">Shipping Address</div>
               <div class="shipping-bold">
-                Street: ${ord.address.street}<br>
-                Area: ${ord.address.area}<br>
-                City: ${ord.address.city}<br>
+                Street: ${escapeHtml(ord.address.street)}<br>
+                Area: ${escapeHtml(ord.address.area)}<br>
+                City: ${escapeHtml(ord.address.city)}<br>
                 Province: ${ord.address.state || 'Punjab'}
               </div>
             </div>
@@ -2959,21 +3071,21 @@ class AuraApp {
         }
 
         list.innerHTML = data.map(item => {
-          const prodName = item.productId?.name || 'Deleted Product';
+          const prodName = escapeHtml(item.productId?.name || 'Deleted Product');
           const stars = '★'.repeat(item.rating) + '☆'.repeat(5 - item.rating);
           return `
             <tr>
               <td data-label="Product"><strong>${prodName}</strong></td>
               <td data-label="Customer">
-                <strong>${item.customerName}</strong><br>
+                <strong>${escapeHtml(item.customerName)}</strong><br>
                 <span style="font-size:0.75rem; color:var(--stone);">${new Date(item.createdAt).toLocaleDateString()}</span>
               </td>
               <td data-label="Rating" style="color:var(--gold); font-size:0.85rem; letter-spacing:1px;">${stars}</td>
               <td data-label="Comment">
-                <p style="font-size:0.85rem; line-height:1.4; white-space: pre-wrap; margin:0;">${item.comment}</p>
+                <p style="font-size:0.85rem; line-height:1.4; white-space: pre-wrap; margin:0;">${escapeHtml(item.comment)}</p>
               </td>
               <td data-label="Admin Reply">
-                <textarea id="reply-text-${item._id}" class="form-input" rows="2" style="font-size:0.85rem; padding:0.4rem; resize:vertical;" placeholder="Write response...">${item.adminReply || ''}</textarea>
+                <textarea id="reply-text-${item._id}" class="form-input" rows="2" style="font-size:0.85rem; padding:0.4rem; resize:vertical;" placeholder="Write response...">${escapeHtml(item.adminReply || '')}</textarea>
               </td>
               <td data-label="Actions">
                 <button class="btn btn-primary" style="padding:0.4rem 0.8rem; font-size:0.75rem;" onclick="app.saveFeedbackReply('${item._id}')">Save</button>
@@ -3059,7 +3171,7 @@ class AuraApp {
             ? `
               <div style="margin-top: 1rem; margin-left: 1.5rem; padding: 0.75rem 1rem; background-color: rgba(201, 162, 39, 0.05); border-left: 2px solid var(--gold);">
                 <strong style="color: var(--gold); font-size: 0.8rem; display: block; margin-bottom: 0.25rem;">Reply from Khan's Fashion Support:</strong>
-                <p style="font-size: 0.85rem; color: var(--ivory); line-height: 1.4; margin: 0;">${item.adminReply}</p>
+                <p style="font-size: 0.85rem; color: var(--ivory); line-height: 1.4; margin: 0;">${escapeHtml(item.adminReply)}</p>
                 <span style="font-size: 0.7rem; color: var(--stone); display: block; margin-top: 0.25rem;">Replied on: ${new Date(item.repliedAt).toLocaleDateString()}</span>
               </div>
             `
@@ -3068,11 +3180,11 @@ class AuraApp {
           return `
             <div style="background-color: var(--charcoal); padding: 1.25rem; border: 1px solid rgba(245,242,237,0.03);">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                <strong style="color: var(--gold); font-size: 0.95rem;">${item.customerName}</strong>
+                <strong style="color: var(--gold); font-size: 0.95rem;">${escapeHtml(item.customerName)}</strong>
                 <span style="font-size: 0.8rem; color: var(--stone);">${formattedDate}</span>
               </div>
               <div style="color: var(--gold); margin-bottom: 0.5rem; font-size: 0.9rem; letter-spacing: 1px;">${stars}</div>
-              <p style="font-size: 0.9rem; color: var(--ivory); line-height: 1.4; margin: 0; white-space: pre-wrap;">${item.comment}</p>
+              <p style="font-size: 0.9rem; color: var(--ivory); line-height: 1.4; margin: 0; white-space: pre-wrap;">${escapeHtml(item.comment)}</p>
               ${replyBlock}
             </div>
           `;

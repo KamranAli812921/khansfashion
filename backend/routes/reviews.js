@@ -20,7 +20,7 @@ router.get('/products/:productId/reviews', async (req, res) => {
     if (token) {
       const jwt = require('jsonwebtoken');
       try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_jwt_secret');
+        const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET || 'fallback_access_secret');
         if (decoded && decoded.role !== 'admin') {
           const existingReview = await Review.findOne({ productId: req.params.productId, customerId: decoded.userId });
           if (!existingReview) {
